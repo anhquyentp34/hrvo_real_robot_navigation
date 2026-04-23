@@ -1,0 +1,16 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/thetien/catkin_ws/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages",
+        "/home/thetien/catkin_ws/src/fast-reid",
+        "/home/thetien/catkin_ws/src/fast-reid",
+        "/home/thetien/catkin_ws/src/fastreid"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/thetien/catkin_ws/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages",
+        "/home/thetien/catkin_ws/src/fast-reid",
+        "/home/thetien/catkin_ws/src/fast-reid",
+        "/home/thetien/catkin_ws/src/fastreid"
+    ]
+}

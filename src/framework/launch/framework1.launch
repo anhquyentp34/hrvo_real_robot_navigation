@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<launch>
+   <node name="actor_veloccity" pkg="framework" type="actor_velocity_fixed.py"/> -->
+  <node name="people" pkg="navigation" type="Person.msg"/>
+  <node name="actor_velocity" pkg="actor_velocity_publisher" type="gazebo_ros_communication.cpp"/>
+ 
+
+</launch>

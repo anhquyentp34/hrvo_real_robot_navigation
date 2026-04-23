@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+
+<launch>
+
+     <arg name="odom_topic" default="/odom"/> 
+     <arg name="global_frame" default="map"/> 
+     <arg name="odom_frame" default="odom"/> 
+    <arg name="base_frame" default="base_footprint"/>
+    <arg name="laser_frame" default="laser"/>     
+    <arg name="scan_topic" default= "/scan"/> 
+    <arg name="move_forward_only" default="false"/>
+
+    <!--  ************** Navigation với SFM Local Planner *************** -->
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    
+        <rosparam file="$(find diff_nav)/config/move_base_params.yaml" command="load" />     
+        <rosparam file="$(find diff_nav)/config/costmap_common_params_velodyne.yaml" command="load" ns="global_costmap"/>
+        <rosparam file="$(find diff_nav)/config/costmap_common_params_velodyne.yaml" command="load" ns="local_costmap"/>
+        <rosparam file="$(find diff_nav)/config/local_costmap_params.yaml" command="load" />
+        <rosparam file="$(find diff_nav)/config/global_costmap_params_map.yaml" command="load" />
+    
+       <!--  <rosparam file="$(find diff_nav)/config/teb_local_planner_params.yaml" command="load" />
+        <rosparam file="$(find diff_nav)/config/move_base_params.yaml" command="load" />  -->
+        
+        <!-- SFM Local Planner Parameters -->
+        <rosparam file="$(find hrvo_local_planner)/cfg/hrvo_local_planner.yaml" command="load" /> 
+
+        <!-- Global Planner  của teb:  <param name="base_global_planner"   value="navfn/NavfnROS"/>-->
+        <param name="base_global_planner" value="global_planner/GlobalPlanner" /> 
+        <param name="planner_frequency" value="5.0" />
+        <param name="planner_patience" value="5.0" />
+
+        <!-- SFM Local Planner -->
+       <!--  <param name="base_local_planner" value="sfm_local_controller/SFMControllerROS"/> -->
+        <param name="base_local_planner" value="hrvo_local_planner/HRVOLocalPlanner"/>
+
+        <param name="controller_frequency" value="20.0" />
+        <param name="controller_patience" value="15.0" />
+
+	 <!-- ************** remap *************** -->
+       <remap from="scan"              to="/scan"/>  <!-- remap rõ ràng -->
+       <remap from="odom"              to="/odom"/>
+        <remap from="cmd_vel" to="/cmd_vel"/>
+       <remap from="dynamic_obstacles" to="/dynamic_obstacles"/>
+    </node>
+     
+</launch>

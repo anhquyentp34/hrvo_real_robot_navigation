@@ -1,0 +1,52 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/thetien/catkin_ws/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/thetien/catkin_ws/src/control_robot_plan/include/**",
+        "/home/thetien/catkin_ws/src/khanh/khanh_diff/diff_decription/include/**",
+        "/home/thetien/catkin_ws/src/khanh/khanh_diff/diff_gazebo/include/**",
+        "/home/thetien/catkin_ws/src/khanh/khanh_diff/diff_goals/include/**",
+        "/home/thetien/catkin_ws/src/khanh/khanh_diff/diff_localization/include/**",
+        "/home/thetien/catkin_ws/src/khanh/khanh_diff/diff_mapping/include/**",
+        "/home/thetien/catkin_ws/src/khanh/khanh_diff/diff_nav/include/**",
+        "/home/thetien/catkin_ws/src/khanh/khanh_diff/diff_rviz/include/**",
+        "/home/thetien/catkin_ws/src/face_recognition_dnn/include/**",
+        "/home/thetien/catkin_ws/src/khanh/khanh_diff/framework/include/**",
+        "/home/thetien/catkin_ws/src/khanh/khanh_diff/frontier_exploration/include/**",
+        "/home/thetien/catkin_ws/src/gazebo_ros_pkgs/gazebo_plugins/include/**",
+        "/home/thetien/catkin_ws/src/gazebo_ros_pkgs/gazebo_ros/include/**",
+        "/home/thetien/catkin_ws/src/gazebo_ros_pkgs/gazebo_ros_control/include/**",
+        "/home/thetien/catkin_ws/src/khanh/khanh_diff/gazebo_sfm_plugin/include/**",
+        "/home/thetien/catkin_ws/src/khanh/khanh_diff/marker_example/include/**",
+        "/home/thetien/catkin_ws/src/khanh/khanh_diff/pointcloud_to_scan/include/**",
+        "/home/thetien/catkin_ws/src/social_navigation/range_sensor_layer/include/**",
+        "/home/thetien/catkin_ws/src/khanh/khanh_diff/ros_pub/include/**",
+        "/home/thetien/catkin_ws/src/send_goal_for_approach/include/**",
+        "/home/thetien/catkin_ws/src/simple_navigation_goal/include/**",
+        "/home/thetien/catkin_ws/src/social_cues_action_recog_track_base_pose/include/**",
+        "/home/thetien/catkin_ws/src/social_cues_recognition/include/**",
+        "/home/thetien/catkin_ws/src/social_navigation/social_navigation_layers/include/**",
+        "/home/thetien/catkin_ws/src/synchronization_based_message_filter/include/**",
+        "/home/thetien/catkin_ws/src/ros_tutorials/turtlesim/include/**",
+        "/home/thetien/catkin_ws/src/ultralytics_ros-noetic-devel/include/**",
+        "/home/thetien/catkin_ws/src/velodyne/velodyne_driver/include/**",
+        "/home/thetien/catkin_ws/src/velodyne_simulator/velodyne_gazebo_plugins/include/**",
+        "/home/thetien/catkin_ws/src/velodyne/velodyne_laserscan/include/**",
+        "/home/thetien/catkin_ws/src/velodyne/velodyne_pointcloud/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

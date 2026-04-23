@@ -1,0 +1,17 @@
+#plugin: []
+obstacle_range: 5.25
+raytrace_range: 5.5
+footprint: [[-0.225,-0.225],[-0.225,0.225], [0.225, 0.225], [0.225,-0.225]]
+robot_radius: 0.225
+#inflation_radius: 0.55
+inflation_radius: 0.3
+cost_scaling_factor: 21
+
+#observation_sources: laser
+obstacle_layer:
+  observation_sources: laser
+   # Note: dung cho lidar 2d 
+  #laser: {topic: /scan, sensor_frame: laser, expected_update_rate: 5, data_type: LaserScan, clearing: true, marking: true}
+   # Node: dung cho velodyne
+  laser: {topic: /scan, sensor_frame: velodyne, expected_update_rate: 5, data_type: LaserScan, clearing: true, marking: true}
+

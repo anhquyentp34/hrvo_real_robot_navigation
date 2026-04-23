@@ -1,0 +1,49 @@
+teb_local_planner/FeedbackMsg Message
+    File: teb_local_planner/FeedbackMsg.msg
+    Raw Message Definition
+        # Message that contains intermediate results 
+        # and diagnostics of the (predictive) planner.
+        std_msgs/Header header
+        # The planned trajectory (or if multiple plans exist, all of them)
+        teb_local_planner/TrajectoryMsg[] trajectories
+        # Index of the trajectory in 'trajectories' that is selected currently
+        uint16 selected_trajectory_idx
+        # List of active obstacles
+        costmap_converter/ObstacleArrayMsg obstacles_msg
+    Compact Message Definition
+        std_msgs/Header header
+        teb_local_planner/TrajectoryMsg[] trajectories
+        uint16 selected_trajectory_idx
+        costmap_converter/ObstacleArrayMsg obstacles_msg
+
+teb_local_planner/TrajectoryMsg Message
+    File: teb_local_planner/TrajectoryMsg.msg
+    Raw Message Definition
+        # Message that contains a trajectory for mobile robot navigation
+        std_msgs/Header header
+        teb_local_planner/TrajectoryPointMsg[] trajectory
+    Compact Message Definition
+        std_msgs/Header header
+        teb_local_planner/TrajectoryPointMsg[] trajectory
+
+teb_local_planner/TrajectoryPointMsg Message
+    File: teb_local_planner/TrajectoryPointMsg.msg
+    Raw Message Definition
+        # Message that contains single point on a trajectory suited for mobile navigation.
+        # The trajectory is described by a sequence of poses, velocities,
+        # accelerations and temporal information.
+        # Why this message type?
+        # nav_msgs/Path describes only a path without temporal information.
+        # trajectory_msgs package contains only messages for joint trajectories.
+        # The pose of the robot
+        geometry_msgs/Pose pose
+        # Corresponding velocity
+        geometry_msgs/Twist velocity
+        # Corresponding acceleration
+        geometry_msgs/Twist acceleration
+        duration time_from_start
+    Compact Message Definition
+        geometry_msgs/Pose pose
+        geometry_msgs/Twist velocity
+        geometry_msgs/Twist acceleration
+        duration time_from_start

@@ -1,0 +1,9 @@
+[submodule "Superbuild/lidarview-superbuild"]
+	path = Superbuild/lidarview-superbuild
+	url = https://gitlab.kitware.com/LidarView/lidarview-superbuild.git
+[submodule "LVCore"]
+	path = LVCore
+	url = https://gitlab.kitware.com/LidarView/lidarview-core.git
+[submodule "Plugins/VelodynePlugin"]
+	path = Plugins/VelodynePlugin
+	url = https://gitlab.kitware.com/LidarView/velodyneplugin.git

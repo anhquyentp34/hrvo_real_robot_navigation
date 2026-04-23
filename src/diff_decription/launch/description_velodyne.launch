@@ -1,0 +1,10 @@
+<!-- Load the robot description to the ROS parameter server.
+-->
+<launch>
+    <!-- <arg name="model" default="$(find diff_decription)/urdf/diff_bot_velodyne.urdf.xacro"/> 
+    <param name="robot_description" command="$(find xacro)/xacro $(arg model)" /> -->
+    
+    <arg name="gpu" default="true"/>
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find diff_decription)/urdf/diff_bot_velodyne.urdf.xacro' gpu:=$(arg gpu)" />
+  
+</launch>

@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="namespace" default="/"/>
+  <arg name="cmd_timeout" default="0.5"/>
+  
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+  <arg name="verbose" default="false"/>
+  
+  <arg name="world_name" default="$(find diff_gazebo)/worlds/t56.world"/>
+
+  <!-- Vehicle pose minh_wall.world  -4, 0  (-1,-3, 1.57  )-->
+  <arg name="x" default="-3"/>
+  <arg name="y" default="0"/>
+  <arg name="z" default="0"/>
+  <arg name="roll" default="0.0"/>
+  <arg name="pitch" default="0.0"/>
+  <arg name="yaw" default="0"/>
+
+
+  <include file="$(find diff_decription)/launch/description_velodyne.launch">
+  </include>   
+
+  <group ns="$(arg namespace)">
+  
+        <!-- Create the world -->
+        <include file="$(find gazebo_ros)/launch/empty_world.launch">
+            <arg name="paused" value="$(arg paused)"/>
+	    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+	    <arg name="gui" value="$(arg gui)"/>
+	    <arg name="headless" value="$(arg headless)"/>
+	    <arg name="debug" value="$(arg debug)"/>
+	    <arg name="verbose" value="$(arg verbose)"/>
+	    <arg name="world_name" default="$(arg world_name)"/>
+	</include>
+    
+	<!-- Launch  the robot state publisher -->
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+		<param name="publish_frequency" value="30.0"/>
+	</node>
+
+	<!-- Spawn robot in Gazebo -->
+	<node name="spawn_vehicle" pkg="gazebo_ros" type="spawn_model"
+		args="-urdf -param robot_description -model diff_bot
+			-gazebo_namespace /$(arg namespace)/gazebo
+			-x $(arg x) -y $(arg y) -z $(arg z)
+			-R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"
+		respawn="false" output="screen" />
+                
+	 
+	<!-- Read joint positions from a GUI, then publish them to joint_states.      <param name="use_gui" value="true"/> -->
+	<node name="joint_state_publisher" pkg="joint_state_publisher"
+	type="joint_state_publisher" ns="$(arg namespace)">
+	<param name="use_gui" value="false"/>
+	</node>
+   
+      
+      <node pkg="tf" type="static_transform_publisher" name="tf_cam_to_base"     args="0 0 1.0 0 0 0 base_link camera_link 50" />
+      <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom"       args="0 0 0 0 0 0 map odom"/>   
+      <!-- chieu cao velodye and laser -->
+     <!-- <node pkg="tf" type="static_transform_publisher"    name="tf_velodyne_to_base"      args="0 0 0 0 0 0 base_link velodyne 100"/>  -->
+
+	<!-- Rviz 
+	 <node name="rviz" pkg="rviz" type="rviz" respawn="false"
+		args="-d $(find diff_rviz)/rviz/diff_bot.rviz"/>  -->
+
+  </group>
+  
+</launch>

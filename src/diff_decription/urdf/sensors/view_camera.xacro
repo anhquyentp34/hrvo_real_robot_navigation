@@ -1,0 +1,64 @@
+<?xml version="1.0" ?>
+<robot name="view_camera_sensor" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="view_camera_sensor" params="parent">
+  <joint name="view_camera_joint" type="continuous">
+      <origin xyz="0 0 6" rpy="0 1.570796 0"/>	
+      <parent link="${parent}"/>
+      <child link="view_camera_link" />
+      <!-- use the following line and type="continuous" to fix the angle of the view camera -->
+      <axis xyz="1 0 0"/>	
+    </joint>
+  <link name="view_camera_link">
+    <inertial>
+      <!-- <mass value="0" /> -->
+      <mass value="1e-5" /> 
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+  <gazebo reference="view_camera_link">
+    <sensor type = "camera" name="view_camera">
+      <update_rate>30.0</update_rate>
+      <camera name="head">
+        <!--horizontal_fov>1.3962634</horizontal_fov-->
+        <image>
+	  <!-- 960x540, 640x480, 800x600-->
+          <width>800</width>
+          <height>800</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.02</near>
+          <far>300</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.007</stddev>
+        </noise>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>25.0</updateRate>
+        <cameraName>view_camera</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <frameName>view_camera_link</frameName>
+        <CxPrime>320.5</CxPrime>
+        <Cx>320.5</Cx>
+        <Cy>240.5</Cy>
+        <!-- image_width / (2*tan(hfov_radian /2)) -->
+        <!-- 320 for wide and 772.55 for narrow stereo camera -->
+        <focal_length>320</focal_length>
+        <distortion_k1>0.0</distortion_k1>
+        <distortion_k2>0.0</distortion_k2>
+        <distortion_k3>0.0</distortion_k3>
+        <distortion_t1>0.0</distortion_t1>
+        <distortion_t2>0.0</distortion_t2>
+      </plugin>
+    </sensor>
+    <!--turnGravityOff>true</turnGravityOff-->
+    <material>Gazebo/Blue</material>
+  </gazebo>
+  </xacro:macro>
+</robot>

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<launch>
+  <!-- <node name="actor_veloccity" pkg="framework" type="actor_velocity_fixed.py"/> -->
+  <node name="collision_checking" pkg="framework" type="collision_checking_fixed5.py"/>
+  <node name="add_obstacle" pkg="framework" type="add_obstacle_fixed3.py"/>
+   <node name="set_poses" pkg="framework" type="set_poses.py"/> 
+   <!-- <node name="send_goal" pkg="framework" type="send_goal.py"/> -->
+
+</launch>
