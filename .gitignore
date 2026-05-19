@@ -1,0 +1,51 @@
+# ROS / catkin workspace
+build/
+devel/
+install/
+log/
+logs/
+.catkin_tools/
+.cache/
+
+# Large archives
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+*.tgz
+
+# ROS bags / databases
+*.bag
+*.db3
+
+# Videos
+*.mp4
+*.avi
+*.mkv
+*.mov
+
+# AI / model files
+*.pt
+*.pth
+*.onnx
+*.engine
+*.weights
+
+# Object / binary build files
+*.o
+*.so
+*.a
+
+# Gazebo / temporary files
+*.log
+*.bak
+*.world.save
+
+# Python
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+.idea/
