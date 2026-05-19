@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<!--
+  Gazebo tối giống empty.world (ground + sun) nhưng có libActorPosesPlugin.so
+  từ pedsim_gazebo_plugin để các actor PedSim được SetWorldPose theo /pedsim_simulator/simulated_agents.
+  Không có: social_contexts.world (tường nặng) — giảm nguy cơ segfault trên một số máy.
+-->
+<sdf version="1.5">
+  <world name="default">
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+    <plugin name="ActorPosesPlugin" filename="libActorPosesPlugin.so"/>
+  </world>
+</sdf>

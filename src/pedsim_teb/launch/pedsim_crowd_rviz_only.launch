@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Chỉ PedSim + pedsim_visualizer + RViz (không Gazebo). Dùng khi cần xem đám đông trên RViz
+  mà không tốn gzserver. Fixed frame odom: cần TF odom -> gazebo (cùng tham số với pedsim_teb_gazebo).
+-->
+<launch>
+  <arg name="use_sim_time" default="false"/>
+  <arg name="scene_file" default="$(find pedsim_simulator)/scenarios/social_contexts.xml"/>
+  <arg name="pedsim_simulation_factor" default="3.0"/>
+  <arg name="pedsim_update_rate" default="25.0"/>
+  <arg name="odom_gazebo_x" default="-1.0"/>
+  <arg name="odom_gazebo_y" default="-1.0"/>
+  <arg name="rviz" default="true"/>
+
+  <param name="use_sim_time" value="$(arg use_sim_time)"/>
+
+  <node pkg="tf" type="static_transform_publisher" name="odom_to_gazebo"
+        args="$(arg odom_gazebo_x) $(arg odom_gazebo_y) 0 0 0 0 odom gazebo 100"/>
+
+  <node name="pedsim_simulator" pkg="pedsim_simulator" type="pedsim_simulator" output="screen">
+    <param name="scene_file" value="$(arg scene_file)" type="string"/>
+    <param name="default_queue_size" value="10" type="int"/>
+    <param name="max_robot_speed" value="1.5" type="double"/>
+    <param name="robot_mode" value="1" type="int"/>
+    <param name="enable_groups" value="true" type="bool"/>
+    <param name="simulation_factor" value="$(arg pedsim_simulation_factor)" type="double"/>
+    <param name="update_rate" value="$(arg pedsim_update_rate)" type="double"/>
+    <param name="frame_id" value="gazebo"/>
+  </node>
+
+  <include file="$(find pedsim_visualizer)/launch/visualizer.launch"/>
+
+  <node if="$(eval arg('rviz') == 'true')" pkg="rviz" type="rviz" name="rviz_pedsim_crowd" output="screen"
+        args="-d $(find pedsim_teb)/config/rviz/pedsim_teb.rviz">
+    <env name="QT_X11_NO_MITSHM" value="1"/>
+  </node>
+</launch>

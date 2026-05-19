@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<launch>
+  <!--
+    Launch duy nhất của diff_description: diff_bot (Velodyne VLP-16) + Gazebo + RViz.
+    Điều khiển bánh: plugin libgazebo_ros_diff_drive trong URDF (không ros_control).
+    gpu:=false → /velodyne_points_cpu ; gpu:=true → /velodyne_points_gpu (velodyne_simulator trong workspace).
+    velodyne_visualize:=true → Gazebo vẽ tia lidar (ray) cho Velodyne.
+  -->
+
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+
+  <arg name="x" default="0.0"/>
+  <arg name="y" default="0.0"/>
+  <arg name="z" default="0.1"/>
+  <arg name="roll" default="0.0"/>
+  <arg name="pitch" default="0.0"/>
+  <arg name="yaw" default="0.0"/>
+
+  <arg name="urdf_xacro" default="$(find diff_description)/urdf/diff_bot.urdf.xacro"/>
+  <arg name="gpu" default="false"/>
+  <arg name="velodyne_visualize" default="true"/>
+  <arg name="model_name" default="diff_bot"/>
+  <arg name="rviz_config" default="$(find diff_description)/rviz/gazebo_spawn_model.rviz"/>
+  <arg name="use_rviz" default="true"/>
+  <arg name="joint_states_topic" default="/joint_states"/>
+
+  <param name="use_sim_time" value="$(arg use_sim_time)"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find gazebo_ros)/worlds/empty.world"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="debug" value="$(arg debug)"/>
+  </include>
+
+  <param name="robot_description" command="$(find xacro)/xacro $(arg urdf_xacro) gpu:=$(arg gpu) velodyne_visualize:=$(arg velodyne_visualize)"/>
+
+  <node name="spawn_model"
+        pkg="gazebo_ros"
+        type="spawn_model"
+        args="-urdf -model $(arg model_name) -param robot_description
+              -x $(arg x) -y $(arg y) -z $(arg z)
+              -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)
+              -unpause"
+        output="screen"/>
+
+  <node name="joint_state_publisher"
+        pkg="joint_state_publisher"
+        type="joint_state_publisher"
+        respawn="false"
+        output="screen">
+    <param name="use_gui" value="false"/>
+    <param name="publish_default_positions" value="true"/>
+    <rosparam subst_value="true">
+      source_list: ["$(arg joint_states_topic)"]
+    </rosparam>
+  </node>
+
+  <node name="robot_state_publisher"
+        pkg="robot_state_publisher"
+        type="robot_state_publisher"
+        respawn="false"
+        output="screen">
+    <param name="publish_frequency" type="double" value="50.0"/>
+    <param name="use_tf_static" type="bool" value="true"/>
+  </node>
+
+  <node if="$(arg use_rviz)"
+        name="rviz"
+        pkg="rviz"
+        type="rviz"
+        args="-d $(arg rviz_config)"
+        respawn="false"
+        output="screen"/>
+
+  <node name="fake_joint_calibration"
+        pkg="rostopic"
+        type="rostopic"
+        args="pub /calibrated std_msgs/Bool true"/>
+</launch>

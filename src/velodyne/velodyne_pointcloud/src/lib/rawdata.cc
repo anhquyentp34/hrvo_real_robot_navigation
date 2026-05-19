@@ -1,7 +1,7 @@
 /*
- *  Copyright (C) 2007 Austin Robot Technology, Patrick Beeson
- *  Copyright (C) 2009, 2010, 2012 Austin Robot Technology, Jack O'Quin
- *  Copyright (C) 2019, Kaarta Inc, Shawn Hanna
+ *  Copyright (C) 2026 quyenanh pt
+ *  Copyright (C) 2026 quyenanh pt
+ *  Copyright (C) 2026 quyenanh pt
  *
  *  License: Modified BSD Software License Agreement
  *

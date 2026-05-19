@@ -1,0 +1,5 @@
+# Giảm tải ODE — hạn chế segfault gzserver với robot omni nhiều joint.
+gazebo:
+  max_step_size: 0.005
+  real_time_update_rate: 200.0
+  real_time_factor: 1.0

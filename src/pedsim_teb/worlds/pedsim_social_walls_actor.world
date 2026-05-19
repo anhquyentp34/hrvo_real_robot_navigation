@@ -1,0 +1,109 @@
+<?xml version="1.0" ?>
+<!--
+  Khớp kích thước scenario social_contexts (~30x30 m): 4 tường + ActorPosesPlugin.
+  Vật liệu đơn giản (không dùng model://grey_wall) để giảm phụ thuộc texture/plugin.
+-->
+<sdf version="1.5">
+  <world name="default">
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <model name="grey_wall_1">
+      <static>1</static>
+      <link name="link">
+        <pose frame="">14.5 -0.5  1.4 0 0 0.0</pose>
+        <collision name="collision">
+          <geometry>
+            <box><size>30.0 0.2 2.8</size></box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <cast_shadows>0</cast_shadows>
+          <geometry>
+            <box><size>30.0 0.2 2.8</size></box>
+          </geometry>
+          <material>
+            <ambient>0.35 0.35 0.38 1</ambient>
+            <diffuse>0.55 0.55 0.58 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="grey_wall_2">
+      <static>1</static>
+      <link name="link">
+        <pose frame="">-0.5 14.5  1.4 0 0 1.57</pose>
+        <collision name="collision">
+          <geometry>
+            <box><size>30.0 0.2 2.8</size></box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <cast_shadows>0</cast_shadows>
+          <geometry>
+            <box><size>30.0 0.2 2.8</size></box>
+          </geometry>
+          <material>
+            <ambient>0.35 0.35 0.38 1</ambient>
+            <diffuse>0.55 0.55 0.58 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="grey_wall_3">
+      <static>1</static>
+      <link name="link">
+        <pose frame="">14.5 29.5  1.4 0 0 0.0</pose>
+        <collision name="collision">
+          <geometry>
+            <box><size>30.0 0.2 2.8</size></box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <cast_shadows>0</cast_shadows>
+          <geometry>
+            <box><size>30.0 0.2 2.8</size></box>
+          </geometry>
+          <material>
+            <ambient>0.35 0.35 0.38 1</ambient>
+            <diffuse>0.55 0.55 0.58 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="grey_wall_4">
+      <static>1</static>
+      <link name="link">
+        <pose frame="">29.5 14.5  1.4 0 0 1.57</pose>
+        <collision name="collision">
+          <geometry>
+            <box><size>30.0 0.2 2.8</size></box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <cast_shadows>0</cast_shadows>
+          <geometry>
+            <box><size>30.0 0.2 2.8</size></box>
+          </geometry>
+          <material>
+            <ambient>0.35 0.35 0.38 1</ambient>
+            <diffuse>0.55 0.55 0.58 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <plugin name="ActorPosesPlugin" filename="libActorPosesPlugin.so"/>
+  </world>
+</sdf>

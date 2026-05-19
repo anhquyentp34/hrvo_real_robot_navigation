@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="odom_topic" default="/odom"/>
+  <arg name="cmd_vel_topic" default="/cmd_vel"/>
+  <arg name="global_frame" default="map"/>
+  <arg name="odom_frame" default="odom"/>
+  <arg name="base_frame" default="base_footprint"/>
+  <arg name="scan_topic" default="/scan_filtered"/>
+  <arg name="use_tracked_people" default="false"/>
+  <arg name="tracked_people_topic" default="/people"/>
+  <arg name="use_gazebo_agents" default="false"/>
+  <arg name="publish_hrvo_input_msg" default="true"/>
+  <arg name="hrvo_input_topic" default="/hrvo/input"/>
+  <arg name="use_hrvo_input_robot_state" default="true"/>
+  <arg name="agent_fusion_policy" default="merge"/>
+  <arg name="agent_duplicate_radius" default="0.35"/>
+  <arg name="hrvo_config"
+       default="$(find hrvo_local_planner)/cfg/hrvo_local_planner_omni.yaml"/>
+
+  <rosparam file="$(arg hrvo_config)" command="load" ns="move_base"/>
+
+  <!-- Vật cản tĩnh từ global costmap (có StaticLayer + inflation) -->
+  <arg name="use_static_obstacles" default="true"/>
+  <arg name="static_obstacle_map_topic" default="/move_base/global_costmap/costmap"/>
+  <arg name="static_cost_threshold" default="90"/>
+  <arg name="static_sample_step" default="2"/>
+  <arg name="static_obstacle_radius" default="0.32"/>
+  <arg name="static_max_agents" default="250"/>
+
+  <include if="$(arg publish_hrvo_input_msg)" file="$(find hrvo_local_planner)/launch/hrvo_input_fusion.launch">
+    <arg name="pedsim_topic" value="/pedsim_simulator/simulated_agents"/>
+    <arg name="odom_topic" value="$(arg odom_topic)"/>
+    <arg name="output_topic" value="$(arg hrvo_input_topic)"/>
+    <arg name="output_frame" value="$(arg global_frame)"/>
+    <arg name="use_static_obstacles" value="$(arg use_static_obstacles)"/>
+    <arg name="static_obstacle_map_topic" value="$(arg static_obstacle_map_topic)"/>
+    <arg name="static_cost_threshold" value="$(arg static_cost_threshold)"/>
+    <arg name="static_sample_step" value="$(arg static_sample_step)"/>
+    <arg name="static_obstacle_radius" value="$(arg static_obstacle_radius)"/>
+    <arg name="static_max_agents" value="$(arg static_max_agents)"/>
+  </include>
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find diff_navigation)/config/move_base_params.yaml" command="load"/>
+    <rosparam file="$(find diff_navigation)/config/costmap_common_params_velodyne.yaml" command="load" ns="global_costmap"/>
+    <rosparam file="$(find diff_navigation)/config/costmap_common_params_velodyne.yaml" command="load" ns="local_costmap"/>
+    <rosparam file="$(find x_omni4wd_simulation)/config/costmap_x_omni4wd_override.yaml" command="load" ns="global_costmap"/>
+    <rosparam file="$(find x_omni4wd_simulation)/config/costmap_x_omni4wd_override.yaml" command="load" ns="local_costmap"/>
+    <rosparam file="$(find diff_navigation)/config/local_costmap_params.yaml" command="load"/>
+    <rosparam file="$(find diff_navigation)/config/global_costmap_params_map.yaml" command="load"/>
+
+    <rosparam file="$(arg hrvo_config)" command="load"/>
+    <param name="HRVOLocalPlanner/use_tracked_people" value="$(arg use_tracked_people)"/>
+    <param name="HRVOLocalPlanner/tracked_people_topic" value="$(arg tracked_people_topic)"/>
+    <param name="HRVOLocalPlanner/use_gazebo_agents" value="$(arg use_gazebo_agents)"/>
+    <param name="HRVOLocalPlanner/use_hrvo_input_topic" value="$(arg publish_hrvo_input_msg)"/>
+    <param name="HRVOLocalPlanner/hrvo_input_topic" value="$(arg hrvo_input_topic)"/>
+    <param name="HRVOLocalPlanner/use_hrvo_input_robot_state" value="$(arg use_hrvo_input_robot_state)"/>
+    <param name="HRVOLocalPlanner/agent_fusion_policy" value="$(arg agent_fusion_policy)"/>
+    <param name="HRVOLocalPlanner/agent_duplicate_radius" value="$(arg agent_duplicate_radius)"/>
+
+    <param name="base_global_planner" value="global_planner/GlobalPlanner"/>
+    <param name="planner_frequency" value="5.0"/>
+    <param name="planner_patience" value="5.0"/>
+
+    <param name="base_local_planner" value="hrvo_local_planner/HRVOLocalPlanner"/>
+    <param name="controller_frequency" value="20.0"/>
+    <param name="controller_patience" value="15.0"/>
+
+    <remap from="scan" to="$(arg scan_topic)"/>
+    <remap from="odom" to="$(arg odom_topic)"/>
+    <remap from="cmd_vel" to="$(arg cmd_vel_topic)"/>
+    <remap from="dynamic_obstacles" to="/dynamic_obstacles"/>
+  </node>
+</launch>

@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<launch>
+  <!--
+    Ép cmd_vel holonomic -> diff-drive (linear.y = 0).
+    move_base remap cmd_vel -> cmd_vel_hrvo; adapter xuất ra cmd_vel thật cho robot/Gazebo.
+  -->
+  <arg name="cmd_vel_in" default="cmd_vel_hrvo"/>
+  <arg name="cmd_vel_out" default="cmd_vel"/>
+  <arg name="project_to_forward" default="false"/>
+  <arg name="input_in_body_frame" default="true"/>
+  <arg name="use_odom_topic" default="true"/>
+  <arg name="odom_topic" default="/odom"/>
+  <arg name="node_name" default="diff_drive_cmd_adapter"/>
+
+  <node name="$(arg node_name)" pkg="hrvo_local_planner" type="diff_drive_twist_adapter" output="screen">
+    <param name="project_to_forward" value="$(arg project_to_forward)"/>
+    <param name="input_in_body_frame" value="$(arg input_in_body_frame)"/>
+    <param name="use_odom_topic" value="$(arg use_odom_topic)"/>
+    <param name="odom_topic" value="$(arg odom_topic)"/>
+    <param name="input_topic" value="$(arg cmd_vel_in)"/>
+    <param name="output_topic" value="$(arg cmd_vel_out)"/>
+  </node>
+</launch>

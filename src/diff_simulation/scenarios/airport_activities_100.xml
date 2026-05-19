@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario>
+  <!-- Based on airport_activities.xml, reduced to 100 pedestrians -->
+  <obstacle x1="-20" y1="-15" x2="-10" y2="-15"/>
+  <obstacle x1="-30" y1="-15" x2="-30" y2="15"/>
+  <obstacle x1="-15" y1="15" x2="25" y2="15"/>
+  <obstacle x1="30" y1="10" x2="30" y2="-10"/>
+  <obstacle x1="10" y1="-15" x2="25" y2="-15"/>
+  <obstacle x1="-30" y1="15" x2="-25" y2="15"/>
+
+  <waypoint id="A" x="-26" y="-19" r="3"/>
+  <waypoint id="B" x="-20" y="19" r="3"/>
+  <waypoint id="C" x="32" y="17" r="3"/>
+  <waypoint id="D" x="32" y="-16" r="3"/>
+  <waypoint id="E" x="7" y="-20" r="3"/>
+  <waypoint id="decision" x="0" y="-5" r="3"/>
+  <queue id="klm" x="-5" y="11" direction="95"/>
+  <queue id="kq" x="5" y="11" direction="90"/>
+  <waypoint id="r0" x="-16" y="8" r="3"/>
+  <waypoint id="r1" x="-26" y="0" r="3"/>
+  <waypoint id="r2" x="-16" y="-8" r="3"/>
+  <waypoint id="r3" x="27" y="1" r="3"/>
+  <waypoint id="r4" x="12" y="-6" r="3"/>
+
+  <attraction id="info_zone" x="0" y="13" width="15" height="4" strength="0"/>
+  <attraction id="lacoste" x="-20" y="0" width="6" height="15" strength="5"/>
+  <attraction id="thalia" x="22" y="0" width="6" height="10" strength="10"/>
+
+  <!-- Robot placeholder agent -->
+  <agent x="-28.33" y="13.23" n="1" dx="0" dy="0" type="2">
+    <addwaypoint id="r0"/>
+    <addwaypoint id="E"/>
+    <addwaypoint id="r2"/>
+    <addwaypoint id="C"/>
+    <addwaypoint id="r3"/>
+    <addwaypoint id="r4"/>
+    <addwaypoint id="D"/>
+    <addwaypoint id="E"/>
+    <addwaypoint id="B"/>
+  </agent>
+
+  <!-- Pedestrians: 14 + 14 + 14 + 14 + 16 + 14 + 14 = 100 -->
+  <agent x="-20" y="21" n="14" dx="5" dy="5" type="0">
+    <addwaypoint id="r0"/>
+    <addwaypoint id="E"/>
+    <addwaypoint id="D"/>
+    <addwaypoint id="decision"/>
+    <addqueue id="kq"/>
+    <addwaypoint id="C"/>
+    <addwaypoint id="B"/>
+  </agent>
+
+  <agent x="-20" y="21" n="14" dx="5" dy="5" type="0">
+    <addwaypoint id="r0"/>
+    <addwaypoint id="E"/>
+    <addwaypoint id="D"/>
+    <addwaypoint id="decision"/>
+    <addwaypoint id="C"/>
+    <addwaypoint id="B"/>
+  </agent>
+
+  <agent x="-25" y="-12" n="14" dx="5" dy="5" type="1">
+    <addwaypoint id="r2"/>
+    <addwaypoint id="decision"/>
+    <addqueue id="klm"/>
+    <addwaypoint id="C"/>
+    <addwaypoint id="D"/>
+    <addwaypoint id="E"/>
+    <addwaypoint id="A"/>
+  </agent>
+
+  <agent x="-25" y="-12" n="14" dx="5" dy="5" type="1">
+    <addwaypoint id="r1"/>
+    <addwaypoint id="decision"/>
+    <addwaypoint id="C"/>
+    <addwaypoint id="D"/>
+    <addwaypoint id="E"/>
+    <addwaypoint id="A"/>
+  </agent>
+
+  <agent x="16" y="-2" n="16" dx="5" dy="5" type="3">
+    <addwaypoint id="decision"/>
+    <addwaypoint id="r4"/>
+  </agent>
+
+  <agent x="34" y="-18" n="14" dx="5" dy="5" type="1">
+    <addwaypoint id="decision"/>
+    <addqueue id="kq"/>
+    <addwaypoint id="C"/>
+    <addwaypoint id="B"/>
+    <addwaypoint id="r0"/>
+    <addwaypoint id="E"/>
+    <addwaypoint id="D"/>
+  </agent>
+
+  <agent x="34" y="-18" n="14" dx="5" dy="5" type="1">
+    <addwaypoint id="decision"/>
+    <addwaypoint id="C"/>
+    <addwaypoint id="B"/>
+    <addwaypoint id="r0"/>
+    <addwaypoint id="E"/>
+    <addwaypoint id="D"/>
+  </agent>
+</scenario>

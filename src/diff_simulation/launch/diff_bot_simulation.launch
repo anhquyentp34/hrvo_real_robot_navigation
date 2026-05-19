@@ -1,0 +1,252 @@
+<?xml version="1.0"?>
+<launch>
+  <!--
+    Pipeline hiển thị robot trong RViz (đồng bộ với rviz_diff_bot_urdf_only.launch):
+    - param robot_description (xacro) + joint_state_publisher (subscribe joint_states_topic) +
+      robot_state_publisher + TF từ Gazebo (odom->base_footprint, joint_states).
+    - RViz mặc định chờ rviz_startup_delay (spawn_delay+1) s rồi mới mở để đã có TF robot.
+    - Chỉ URDF trong RViz (không Gazebo): roslaunch diff_simulation rviz_diff_bot_urdf_only.launch
+    - map_odom_mode:=identity_static (mặc định): static map->odom, tránh lỗi transform tới map.
+  -->
+
+  <arg name="world_name" default="$(find pedsim_gazebo_plugin)/worlds/singleagent.world"/>
+  <arg name="map_file" default="$(find diff_slam)/maps/singleagent_centered.yaml"/>
+  <arg name="debug" default="false"/>
+  <arg name="gui" default="true"/>
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="physics" default="ode"/>
+  <arg name="extra_gazebo_args" default="--verbose"/>
+
+  <!-- Spawn robot sớm để tránh node khác query /gazebo/model_states khi model chưa tồn tại -->
+  <arg name="spawn_delay" default="2.0"/>
+  <!-- Chờ (s) trước khi mở RViz; nên >= spawn_delay để Gazebo đã publish /joint_states + odom->base_footprint. -->
+  <arg name="rviz_startup_delay" default="$(eval arg('spawn_delay') + 1.0)"/>
+  <arg name="x_pos" default="0.0"/>
+  <arg name="y_pos" default="0.0"/>
+  <!-- Độ cao spawn trong Gazebo (m); tăng nếu robot chìm sàn / cần nâng theo trục Z. -->
+  <arg name="z_pos" default="0.095"/>
+  <arg name="yaw" default="0.0"/>
+  <arg name="model_name" default="diff_bot"/>
+
+  <arg name="gpu" default="false"/>
+  <arg name="velodyne_visualize" default="false"/>
+  <arg if="$(arg gpu)" name="velodyne_cloud_in" default="/velodyne_points"/>
+  <arg unless="$(arg gpu)" name="velodyne_cloud_in" default="/velodyne_points"/>
+
+  <!-- scan_raw_topic: đầu ra từ pointcloud_to_laserscan
+       scan_topic: đầu ra sau khi lọc bởi laser_filters (giống cách ICR2026 làm) -->
+  <arg name="scan_raw_topic" default="/scan"/>
+  <arg name="scan_topic" default="/scan_filtered"/>
+  <!-- Tam quet LaserScan sau khi convert tu velodyne -->
+  <arg name="scan_range_max" default="100.0"/>
+  <arg name="laser_filter_config" default="$(find diff_simulation)/config/laser_filter_params.yaml"/>
+  <arg name="odom_topic" default="/odom"/>
+  <arg name="cmd_vel_topic" default="/cmd_vel"/>
+  <arg name="odom_frame_id" default="odom"/>
+  <arg name="base_frame_id" default="base_footprint"/>
+  <arg name="global_frame_id" default="map"/>
+  <arg name="local_planner" default="hrvo" doc="teb | dwa | hrvo"/>
+  <!-- KHÔNG bật đồng thời với AMCL: cả hai đều publish map->odom -> TF_OLD_DATA, costmap lỗi map->base_footprint. -->
+  <arg name="static_tf" default="false"/>
+  <!--
+    map_odom_mode:
+      identity_static — map≡odom (identity), ổn định RViz/costmap trong Gazebo khi map trùng world (mặc định).
+      amcl — dùng AMCL (cần scan + TF odom->base ổn định); nếu vẫn lỗi TF hãy thử identity_static.
+  -->
+  <arg name="map_odom_mode" default="identity_static"/>
+  <arg name="use_static_map_localization" default="true"/>
+  <arg name="use_rviz" default="true"/>
+  <!-- final.rviz: điều hướng đầy đủ. gazebo_spawn_model.rviz: nhẹ, Fixed Frame base_footprint (xem robot nhanh). -->
+  <arg name="rvizconfig" default="$(find diff_rviz)/rviz/final.rviz"/>
+  <arg name="open_rviz_immediately" default="false" doc="true: bỏ trễ rviz_startup_delay (debug); false: chờ robot spawn rồi mới mở RViz."/>
+
+  <arg name="use_tracked_people" default="false"/>
+  <arg name="tracked_people_topic" default="/people"/>
+  <!-- HRVO: true = thêm agent từ /gazebo/model_states (merge + lọc trùng); false = chỉ Pedsim qua hrvo_input_fusion_node -->
+  <arg name="use_gazebo_agents" default="false"/>
+  <!-- Bật node fusion Pedsim + costmap tĩnh -> /hrvo/input (khuyến nghị cho local_planner:=hrvo) -->
+  <arg name="hrvo_publish_input_fusion" default="true"/>
+  <arg name="hrvo_agent_fusion_policy" default="merge"/>
+  <arg name="hrvo_use_hrvo_input_robot_state" default="true"/>
+  <!-- Ép cmd_vel holonomic -> diff-drive (khi dùng holonomic_mode hoặc nguồn có linear.y) -->
+  <arg name="use_diff_drive_cmd_adapter" default="false"/>
+  <!-- false + input_in_body_frame=true: HRVOLocalPlanner (holonomic_mode=false) đã xuất vx theo base -->
+  <arg name="project_hrvo_to_forward" default="false"/>
+  <arg name="adapter_input_in_body_frame" default="true"/>
+  <!-- hrvo_profile: default | fast (fast ≈ HRVO_ws 1.2–1.4 m/s + Gazebo tăng gia tốc bánh) -->
+  <arg name="hrvo_profile" default="default"/>
+  <arg name="hrvo_config" default="$(find hrvo_local_planner)/cfg/hrvo_local_planner.yaml"
+       if="$(eval arg('hrvo_profile') == 'default')"/>
+  <arg name="hrvo_config" default="$(find hrvo_local_planner)/cfg/hrvo_local_planner_diff_fast.yaml"
+       unless="$(eval arg('hrvo_profile') == 'default')"/>
+  <arg name="gazebo_wheel_acceleration" default="2.0"/>
+  <arg name="gazebo_wheel_torque" default="50"/>
+  <!-- Bật mặc định pedsim để spawn crowd trong Gazebo -->
+  <arg name="enable_pedsim" default="true"/>
+  <!-- Bật mặc định publish AnimatedMarkerArray để hiển thị pedestrian mesh trên RViz -->
+  <arg name="enable_actor_visualization" default="true"/>
+  <arg name="enable_social_density_fusion" default="true"/>
+  <arg name="social_density_config" default="$(find social_density_fusion)/config/costmapEx_33_people.yaml"/>
+  <!-- Tam thoi giam crowd xuong 30 pedestrians -->
+  <arg name="pedsim_scene_file" default="$(find diff_simulation)/scenarios/singleagent_10.xml"/>
+  <arg name="pedsim_default_queue_size" default="10"/>
+  <arg name="pedsim_max_robot_speed" default="1.5"/>
+  <arg name="pedsim_robot_mode" default="1"/>
+  <arg name="pedsim_enable_groups" default="true"/>
+  <arg name="pedsim_simulation_factor" default="1.0"/>
+  <arg name="pedsim_update_rate" default="15.0"/>
+  <!-- Giảm tải khi spawn crowd vào Gazebo -->
+  <arg name="pedsim_spawn_delay_sec" default="0.5"/>
+  <!-- Nguồn joint_states từ Gazebo (plugin diff_drive + bánh); trùng với rviz_diff_bot_urdf_only (GUI thay bằng topic). -->
+  <arg name="joint_states_topic" default="/joint_states"/>
+
+  <env name="GAZEBO_MODEL_PATH" value="$(find diff_gazebo)/worlds/models:$(find gazebo_ros_actor_plugin)/config/skins:$(optenv GAZEBO_MODEL_PATH)"/>
+  <env name="GAZEBO_RESOURCE_PATH" value="$(find diff_gazebo)/worlds:$(optenv GAZEBO_RESOURCE_PATH)"/>
+  <env name="GAZEBO_PLUGIN_PATH" value="$(optenv GAZEBO_PLUGIN_PATH):$(find gazebo_ros_actor_plugin)/../../devel/lib"/>
+
+  <!-- Đảm bảo /use_sim_time trước các node khác (empty_world cũng set, nhưng tránh lệ thứ tự file). -->
+  <param name="/use_sim_time" value="$(arg use_sim_time)"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="physics" value="$(arg physics)"/>
+    <arg name="extra_gazebo_args" value="$(arg extra_gazebo_args)"/>
+  </include>
+
+  <!-- Pedsim actors trong Gazebo: simulator phat /pedsim_simulator/simulated_agents,
+       spawn_pedsim_agents spawn model SDF theo toa do agent. -->
+  <group if="$(arg enable_pedsim)">
+    <node name="pedsim_simulator" pkg="pedsim_simulator" type="pedsim_simulator" output="screen">
+      <param name="scene_file" value="$(arg pedsim_scene_file)" type="string"/>
+      <param name="default_queue_size" value="$(arg pedsim_default_queue_size)" type="int"/>
+      <param name="max_robot_speed" value="$(arg pedsim_max_robot_speed)" type="double"/>
+      <param name="robot_mode" value="$(arg pedsim_robot_mode)" type="int"/>
+      <param name="enable_groups" value="$(arg pedsim_enable_groups)" type="bool"/>
+      <param name="simulation_factor" value="$(arg pedsim_simulation_factor)" type="double"/>
+      <param name="update_rate" value="$(arg pedsim_update_rate)" type="double"/>
+      <param name="frame_id" value="$(arg global_frame_id)"/>
+      <param name="gazebo_robot_model_name" value="$(arg model_name)" type="string"/>
+    </node>
+    <node pkg="pedsim_gazebo_plugin" type="spawn_pedsim_agents.py" name="spawn_pedsim_agents" output="screen">
+      <param name="spawn_delay_sec" value="$(arg pedsim_spawn_delay_sec)" type="double"/>
+    </node>
+  </group>
+
+  <!-- Convert actor poses trong Gazebo -> animated_marker_msgs/AnimatedMarkerArray cho RViz -->
+  <include if="$(arg enable_actor_visualization)" file="$(find pedsim_gazebo_plugin)/launch/actor_animated_markers.launch">
+    <arg name="frame_id" value="$(arg global_frame_id)"/>
+    <arg name="output_topic" value="/actor_visualization"/>
+    <arg name="input_source" value="pedsim"/>
+    <arg name="pedsim_topic" value="/pedsim_simulator/simulated_agents"/>
+  </include>
+
+  <!-- Social density fusion (su dung da giac lidar trong map) -->
+  <include if="$(arg enable_social_density_fusion)" file="$(find social_density_fusion)/launch/social_density_fusion.launch">
+    <arg name="scenario_config" value="$(arg social_density_config)"/>
+    <arg name="scan_topic" value="$(arg scan_topic)"/>
+  </include>
+
+  <!-- Chỉ dùng khi không có AMCL (map->odom do AMCL ước lượng). -->
+  <node if="$(eval arg('static_tf') and (not arg('use_static_map_localization')))"
+        pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom_tf"
+        args="0 0 0 0 0 0 map odom"/>
+
+  <param name="robot_description"
+         command="$(find xacro)/xacro $(find diff_description)/urdf/diff_bot.urdf.xacro gpu:=$(arg gpu) velodyne_visualize:=$(arg velodyne_visualize) wheel_acceleration:=$(arg gazebo_wheel_acceleration) wheel_torque:=$(arg gazebo_wheel_torque)"/>
+
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+        args="-urdf -unpause -model $(arg model_name) -param robot_description -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -R 0 -P 0 -Y $(arg yaw)"
+        launch-prefix="bash -c 'sleep $(arg spawn_delay); exec $0 $@'"/>
+
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"
+        respawn="false" output="screen">
+    <param name="use_gui" value="false"/>
+    <param name="publish_default_positions" value="true"/>
+    <rosparam subst_value="true">
+      source_list: ["$(arg joint_states_topic)"]
+    </rosparam>
+  </node>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+        respawn="false" output="screen">
+    <param name="publish_frequency" type="double" value="50.0"/>
+    <param name="use_tf_static" value="true"/>
+  </node>
+
+  <include file="$(find pointcloud_to_scan)/launch/pointcloud2scan.launch">
+    <arg name="cloud_in" value="$(arg velodyne_cloud_in)"/>
+    <arg name="scan_out" value="$(arg scan_raw_topic)"/>
+    <arg name="range_max" value="$(arg scan_range_max)"/>
+    <!-- Giữ frame_id của LaserScan khớp sensor_frame trong costmap (velodyne) -->
+    <arg name="target_frame" value="velodyne"/>
+  </include>
+
+  <!-- Lọc scan để giảm nhiễu/ghost trail trong costmap -->
+  <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="laser_filter">
+    <rosparam command="load" file="$(arg laser_filter_config)" />
+    <remap from="scan" to="$(arg scan_raw_topic)" />
+    <remap from="scan_filtered" to="$(arg scan_topic)" />
+  </node>
+  <group if="$(arg use_static_map_localization)">
+    <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" output="screen">
+      <param name="frame_id" value="$(arg global_frame_id)"/>
+    </node>
+    <include if="$(eval arg('map_odom_mode') == 'amcl')"
+             file="$(find diff_simulation)/launch/includes/amcl/amcl.launch.xml">
+      <arg name="scan_topic" value="$(arg scan_topic)"/>
+      <arg name="initial_pose_x" value="$(arg x_pos)"/>
+      <arg name="initial_pose_y" value="$(arg y_pos)"/>
+      <arg name="initial_pose_a" value="$(arg yaw)"/>
+      <arg name="odom_frame_id" value="$(arg odom_frame_id)"/>
+      <arg name="base_frame_id" value="$(arg base_frame_id)"/>
+      <arg name="global_frame_id" value="$(arg global_frame_id)"/>
+      <arg name="amcl_startup_delay" value="$(eval arg('spawn_delay') + 0.5)"/>
+    </include>
+    <node if="$(eval arg('map_odom_mode') == 'identity_static')"
+          pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom_identity"
+          args="0 0 0 0 0 0 map odom"/>
+  </group>
+  <include if="$(eval arg('local_planner') == 'teb')" file="$(find diff_navigation)/launch/move_base_TEB1_velodyne.launch">
+    <arg name="cmd_vel_topic" value="$(arg cmd_vel_topic)"/>
+    <arg name="odom_topic" value="$(arg odom_topic)"/>
+    <arg name="scan_topic" value="$(arg scan_topic)"/>
+    <arg name="use_static_map_localization" value="$(arg use_static_map_localization)"/>
+  </include>
+  <include if="$(eval arg('local_planner') == 'dwa')" file="$(find diff_simulation)/launch/includes/move_base_diff_bot.launch.xml">
+    <arg name="odom_topic" value="$(arg odom_topic)"/>
+    <arg name="laser_topic" value="$(arg scan_topic)"/>
+    <arg name="cmd_vel_out" value="$(arg cmd_vel_topic)"/>
+  </include>
+  <include if="$(eval arg('local_planner') == 'hrvo')" file="$(find diff_navigation)/launch/move_base_hrvo.launch">
+    <arg name="global_frame" value="$(arg global_frame_id)"/>
+    <arg name="odom_topic" value="$(arg odom_topic)"/>
+    <arg name="scan_topic" value="$(arg scan_topic)"/>
+    <arg name="cmd_vel_topic" value="$(arg cmd_vel_topic)"/>
+    <arg name="use_tracked_people" value="$(arg use_tracked_people)"/>
+    <arg name="tracked_people_topic" value="$(arg tracked_people_topic)"/>
+    <arg name="use_gazebo_agents" value="$(arg use_gazebo_agents)"/>
+    <arg name="publish_hrvo_input_msg" value="$(arg hrvo_publish_input_fusion)"/>
+    <arg name="agent_fusion_policy" value="$(arg hrvo_agent_fusion_policy)"/>
+    <arg name="use_hrvo_input_robot_state" value="$(arg hrvo_use_hrvo_input_robot_state)"/>
+    <arg name="use_diff_drive_cmd_adapter" value="$(arg use_diff_drive_cmd_adapter)"/>
+    <arg name="project_hrvo_to_forward" value="$(arg project_hrvo_to_forward)"/>
+    <arg name="adapter_input_in_body_frame" value="$(arg adapter_input_in_body_frame)"/>
+    <arg name="adapter_use_odom" value="true"/>
+    <arg name="hrvo_config" value="$(arg hrvo_config)"/>
+  </include>
+
+  <node if="$(eval arg('use_rviz') and (not arg('open_rviz_immediately')))"
+        pkg="rviz" type="rviz" name="rviz"
+        args="-d $(arg rvizconfig)" required="true"
+        launch-prefix="bash -c 'sleep $(arg rviz_startup_delay); exec $0 $@'"/>
+  <node if="$(eval arg('use_rviz') and arg('open_rviz_immediately'))"
+        pkg="rviz" type="rviz" name="rviz"
+        args="-d $(arg rvizconfig)" required="true"/>
+</launch>

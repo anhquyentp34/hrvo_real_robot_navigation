@@ -1,0 +1,333 @@
+<?xml version="1.0"?>
+<launch>
+  <!--
+    Mô phỏng x_omni4wd ICR2026 (costmapEx): không phụ thuộc diffbot_*.
+    Map và cấu hình nav dùng x_omni4wd_navigation; world/models dùng x_omni4wd_gazebo.
+
+    Điều khiển actor (gazebo_ros_actor_plugin / libgazebo_ros_actor_command.so), đúng mô hình bài viết:
+    https://www.blackcoffeerobotics.com/blog/gazebo-simulator-ros-plugin-to-control-actors
+    - follow_mode path: plugin subscribe nav_msgs/Path trên path_topic (/cmd_path … /cmd_path4).
+    - follow_mode velocity: Twist trên vel_topic — trong ICR2026_env.world mỗi actor dùng vel_topic riêng
+      /actor30/cmd_vel … /actor33/cmd_vel (tránh trùng /cmd_vel của move_base).
+    ROS 1 Noetic + Gazebo Classic 11: package gazebo_ros_actor_plugin trong workspace.
+  -->
+
+  <arg name="scenario" default="icr2026" doc="Kịch bản waypoints cho goal sender: easy, medium, hard"/>
+  <arg name="simulation_scenario" default="singleagent_15_chaotic" doc="Kịch bản mô phỏng (theo HRVO): singleagent_15_chaotic"/>
+  <arg name="num_cycles" default="1" doc="Số chu kỳ lặp lại waypoints"/>
+  <!--
+    Goal sender & publisher actor 30–33:
+    - Bản ICR2026_env (mặc định): goal_sender_node_scenario.py + multi_actor_path_publisher.py (waypoints trong code ACTOR_CONFIGS).
+    - Cùng kiểu x_omni4wd_simulation_ICR2026_proxemic.launch (hl_24m_proxemic): goal_sender_node_one.py + multi_actor_path_publisher_one.py
+      (waypoints cố định trong script _one.py — chỉ phù hợp world/map proxemic, không dùng cho ICR2026_env).
+  -->
+  <arg name="goal_sender_type" default="goal_sender_node_scenario.py" doc="Mặc định ICR2026; proxemic: goal_sender_node_one.py"/>
+
+  <arg name="world_name" default="$(find pedsim_gazebo_plugin)/worlds/singleagent.world"/>
+  <arg name="map_file" default="$(find diff_slam)/maps/singleagent_centered.yaml"/>
+  <arg name="pedsim_scene_file" default="$(find diff_simulation)/scenarios/$(arg simulation_scenario).xml"/>
+  <arg name="debug" default="false"/>
+  <arg name="gui" default="true"/>
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="physics" default="ode"/>
+  <arg name="extra_gazebo_args" default="--verbose"/>
+
+  <arg name="spawn_delay" default="5.0"/>
+  <arg name="x_pos" default="-9.5"/>
+  <arg name="y_pos" default="-6.0"/>
+  <arg name="yaw" default="1.5708"/>
+  <!-- <arg name="x_pos" default="9.0"/>
+  <arg name="y_pos" default="6.0"/>
+  <arg name="yaw" default="-1.5708"/> -->
+  <arg name="z_pos_x_omni4wd" default="0.095"/>
+
+
+  <arg name="cmd_vel_topic" default="/cmd_vel"/>
+  <arg name="odom_topic" default="/odom"/>
+  <arg name="scan_raw_topic" default="/scan"/>
+  <arg name="scan_topic" default="/scan_filtered"/>
+  <arg name="rf2o_scan_topic" default="$(arg scan_raw_topic)"/>
+  <arg name="laser_filter_config" default="$(find x_omni4wd_simulation)/config/laser_filter_params.yaml"/>
+  <arg name="use_map_topic" default="true"/>
+  <arg name="odom_frame_id" default="odom"/>
+  <arg name="base_frame_id" default="base_footprint"/>
+  <arg name="global_frame_id" default="map"/>
+  <!-- Giống algorithm_navigation trong x_omni4wd_navigation.launch: teb | dwa -->
+  <arg name="local_planner" default="teb"/>
+  <arg name="use_static_map_localization" default="true"/>
+  <arg name="use_tracked_people" default="false"/>
+  <arg name="tracked_people_topic" default="/people"/>
+  <arg name="use_gazebo_agents" default="true"/>
+  <arg name="enable_pedsim" default="true"/>
+  <arg name="model_name" default="x_omni4wd"/>
+  <arg name="pedsim_default_queue_size" default="10"/>
+  <arg name="pedsim_max_robot_speed" default="1.5"/>
+  <arg name="pedsim_robot_mode" default="1"/>
+  <arg name="pedsim_enable_groups" default="true"/>
+  <arg name="pedsim_simulation_factor" default="1.0"/>
+  <arg name="pedsim_update_rate" default="15.0"/>
+  <arg name="pedsim_spawn_delay_sec" default="2.0"/>
+  <arg name="move_forward_only" default="true"/>
+  <!-- Không bật khi dùng AMCL: static map→odom trùng với AMCL → TF_REPEATED_DATA. -->
+  <arg name="static_tf" default="false"/>
+
+  <!-- Khớp x_omni4wd_bringup.launch + giới hạn TEB/DWA: vận tốc bánh (rad/s) đủ cho vx=0.6 m/s, vy=0.5 m/s -->
+  <arg name="L_HALF" default="0.176776695"/>
+  <arg name="W_HALF" default="0.176776695"/>
+  <arg name="wheel_radius" default="0.0635"/>
+  <arg name="max_wheel_speed" default="22.0"/>
+  <arg name="cmd_vel_to_wheels_timeout" default="0.5"/>
+
+  <arg name="rvizconfig" default="$(find x_omni4wd_navigation)/rviz/x_omni4wd_simulation.rviz"/>
+  <arg name="enable_bird_view_relay" default="true"/>
+  <arg name="actor_path_publisher_type" default="multi_actor_path_publisher.py" doc="Mặc định ICR2026; proxemic: multi_actor_path_publisher_one.py"/>
+  <arg name="social_config_file" default="$(find social_density_fusion)/config/costmapEx_33_people.yaml"/>
+  <arg name="social_auto_reload_config" default="true"/>
+  <arg name="enable_path_density_weight_controller" default="true"/>
+  <arg name="path_topic_for_density_controller" default="/move_base/GlobalPlanner/plan"/>
+  <!-- Giam nhap nhay density: giu sau khi No Path tang weight + doi path on dinh theo wall-clock -->
+  <arg name="density_restore_hold_after_relax_sec" default="2.5"/>
+  <arg name="density_path_found_stable_wall_sec" default="1.5"/>
+  <!-- Trễ tối thiểu giữa hai lần restore (giảm weight) — giảm dao động path/no-path -->
+  <arg name="density_restore_min_interval_sec" default="2.0"/>
+  <!-- Tạm tắt PATH FOUND restore (giảm weight ngược thứ tự layer). NO PATH / relax vẫn chạy. -->
+  <arg name="density_enable_path_found_restore" default="false"/>
+  <!-- Actor 30–33: waypoints trong gazebo_ros_actor_plugin/scripts/multi_actor_path_publisher.py (ACTOR_CONFIGS). -->
+  <!-- Trễ trong node (startup_delay_sec) trước khi publish Path: đợi Gazebo load libgazebo_ros_actor_command. -->
+  <arg name="actor_path_publisher_delay" default="5.0"/>
+  <arg name="enable_actor_visualization" default="true"/>
+
+  <!-- Gazebo: model:// từ x_omni4wd_gazebo/models; skins actor; .world qua RESOURCE_PATH. -->
+  <env name="GAZEBO_MODEL_PATH" value="$(find x_omni4wd_gazebo)/models:$(find gazebo_ros_actor_plugin)/config/skins:$(optenv GAZEBO_MODEL_PATH)"/>
+  <env name="GAZEBO_RESOURCE_PATH" value="$(find x_omni4wd_gazebo)/worlds:$(optenv GAZEBO_RESOURCE_PATH)"/>
+  <!-- Plugin Gazebo theo HRVO: actor plugin + pedsim plugin -->
+  <env name="GAZEBO_PLUGIN_PATH" value="$(optenv GAZEBO_PLUGIN_PATH):$(find gazebo_ros_actor_plugin)/../../devel/lib:$(find pedsim_gazebo_plugin)/../../devel/lib"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="physics" value="$(arg physics)"/>
+    <arg name="extra_gazebo_args" value="$(arg extra_gazebo_args)"/>
+  </include>
+
+  <group if="$(arg enable_pedsim)">
+    <node name="pedsim_simulator" pkg="pedsim_simulator" type="pedsim_simulator" output="screen">
+      <param name="scene_file" value="$(arg pedsim_scene_file)" type="string"/>
+      <param name="default_queue_size" value="$(arg pedsim_default_queue_size)" type="int"/>
+      <param name="max_robot_speed" value="$(arg pedsim_max_robot_speed)" type="double"/>
+      <param name="robot_mode" value="$(arg pedsim_robot_mode)" type="int"/>
+      <param name="enable_groups" value="$(arg pedsim_enable_groups)" type="bool"/>
+      <param name="simulation_factor" value="$(arg pedsim_simulation_factor)" type="double"/>
+      <param name="update_rate" value="$(arg pedsim_update_rate)" type="double"/>
+      <param name="frame_id" value="$(arg global_frame_id)"/>
+      <param name="gazebo_robot_model_name" value="$(arg model_name)" type="string"/>
+    </node>
+    <node pkg="pedsim_gazebo_plugin" type="spawn_pedsim_agents.py" name="spawn_pedsim_agents" output="screen">
+      <param name="spawn_delay_sec" value="$(arg pedsim_spawn_delay_sec)" type="double"/>
+    </node>
+  </group>
+
+  <!-- Chỉ dùng khi không chạy AMCL (vd. test costmap); nếu không sẽ trùng TF map→odom với AMCL. -->
+  <node if="$(arg static_tf)" pkg="tf2_ros" type="static_transform_publisher" name="odom_wrt_map_tf" args="0 0 0 0 0 0 map odom">
+    <param name="transform_tolerance" value="0.5"/>
+  </node>
+
+  <!-- x_omni4wd spawn and control (no include) -->
+  <arg name="urdf_file_omni" value="$(find x_omni4wd_description)/urdf/x_omni4wd_description.urdf"/>
+  <param name="robot_description" textfile="$(arg urdf_file_omni)"/>
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+        args="-urdf -model robot -param robot_description -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos_x_omni4wd) -R 0 -P 0 -Y $(arg yaw)"
+        launch-prefix="bash -c 'sleep $(arg spawn_delay); $0 $@'"/>
+
+  <rosparam file="$(find x_omni4wd_control)/config/controllers.yaml" command="load"/>
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/x_omni4wd"
+        args="joint_state_controller front_left_wheel_velocity_controller rear_left_wheel_velocity_controller rear_right_wheel_velocity_controller front_right_wheel_velocity_controller"
+        launch-prefix="bash -c 'sleep 8; $0 $@'"/>
+  <node name="cmd_vel_to_omni_wheels" pkg="x_omni4wd_control" type="cmd_vel_to_omni_wheels.py" output="screen">
+    <remap from="cmd_vel" to="$(arg cmd_vel_topic)"/>
+    <param name="L_HALF" value="$(arg L_HALF)"/>
+    <param name="W_HALF" value="$(arg W_HALF)"/>
+    <param name="wheel_radius" value="$(arg wheel_radius)"/>
+    <param name="max_wheel_speed" value="$(arg max_wheel_speed)"/>
+    <param name="cmd_timeout" value="$(arg cmd_vel_to_wheels_timeout)"/>
+  </node>
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" respawn="false" output="screen">
+    <param name="use_gui" value="false"/>
+    <param name="publish_default_positions" value="true"/>
+    <rosparam param="source_list">["/x_omni4wd/joint_states"]</rosparam>
+  </node>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+    <param name="publish_frequency" type="double" value="50.0"/>
+    <param name="tf_prefix" value=""/>
+    <param name="use_tf_static" value="true"/>
+  </node>
+  <node name="rf2o_laser_odometry" pkg="x_omni4wd_slam" type="x_omni4wd_slam_node" output="screen">
+    <rosparam command="load" file="$(find x_omni4wd_slam)/config/rf2o_x_omni4wd.yaml"/>
+    <param name="laser_scan_topic" value="$(arg rf2o_scan_topic)"/>
+    <param name="odom_topic" value="$(arg odom_topic)"/>
+  </node>
+  <!-- Relay bird-view camera topics to names expected by RViz config -->
+  <node if="$(arg enable_bird_view_relay)"
+        pkg="topic_tools"
+        type="relay"
+        name="bird_view_image_relay"
+        args="/view_camera/bird_view/image_raw /view_camera/image_raw" />
+  <node if="$(arg enable_bird_view_relay)"
+        pkg="topic_tools"
+        type="relay"
+        name="bird_view_info_relay"
+        args="/view_camera/bird_view/camera_info /view_camera/camera_info" />
+
+  <!-- Navigation stack trong simulation (độc lập, không include navigation.launch) -->
+  <!-- Lọc scan để giảm nhiễu/điểm bám sai gây ghost trail trong costmap -->
+  <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="laser_filter">
+    <rosparam command="load" file="$(arg laser_filter_config)" />
+    <remap from="scan" to="$(arg scan_raw_topic)" />
+    <remap from="scan_filtered" to="$(arg scan_topic)" />
+  </node>
+
+  <group if="$(arg use_static_map_localization)">
+    <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" output="screen">
+      <param name="frame_id" value="$(arg global_frame_id)"/>
+    </node>
+    <include file="$(find diff_simulation)/launch/includes/amcl/amcl.launch.xml">
+      <arg name="scan_topic" value="$(arg scan_topic)"/>
+      <arg name="initial_pose_x" value="$(arg x_pos)"/>
+      <arg name="initial_pose_y" value="$(arg y_pos)"/>
+      <arg name="initial_pose_a" value="$(arg yaw)"/>
+      <arg name="odom_frame_id" value="$(arg odom_frame_id)"/>
+      <arg name="base_frame_id" value="$(arg base_frame_id)"/>
+      <arg name="global_frame_id" value="$(arg global_frame_id)"/>
+    </include>
+  </group>
+
+  <include if="$(eval arg('local_planner') == 'teb')" file="$(find diff_navigation)/launch/move_base_TEB1_velodyne.launch">
+    <arg name="cmd_vel_topic" value="$(arg cmd_vel_topic)"/>
+    <arg name="odom_topic" value="$(arg odom_topic)"/>
+    <arg name="scan_topic" value="$(arg scan_topic)"/>
+    <arg name="use_static_map_localization" value="$(arg use_static_map_localization)"/>
+  </include>
+  <include if="$(eval arg('local_planner') == 'dwa')" file="$(find diff_simulation)/launch/includes/move_base_diff_bot.launch.xml">
+    <arg name="odom_topic" value="$(arg odom_topic)"/>
+    <arg name="laser_topic" value="$(arg scan_topic)"/>
+    <arg name="cmd_vel_out" value="$(arg cmd_vel_topic)"/>
+  </include>
+  <include if="$(eval arg('local_planner') == 'hrvo')" file="$(find diff_navigation)/launch/move_base_hrvo_omni.launch">
+    <arg name="odom_topic" value="$(arg odom_topic)"/>
+    <arg name="scan_topic" value="$(arg scan_topic)"/>
+    <arg name="cmd_vel_topic" value="$(arg cmd_vel_topic)"/>
+    <arg name="use_tracked_people" value="$(arg use_tracked_people)"/>
+    <arg name="tracked_people_topic" value="$(arg tracked_people_topic)"/>
+    <arg name="use_gazebo_agents" value="$(arg use_gazebo_agents)"/>
+  </include>
+
+  <!-- required=false: tránh cả launch tắt khi RViz/plugin lỗi; Gazebo/nav vẫn chạy -->
+  <node pkg="rviz" type="rviz" name="rviz" required="false" args="-d $(arg rvizconfig)"/>
+  
+  <!-- Publisher Path (nav_msgs/Path, frame_id=map) → path_topic trong world. -->
+  <node name="multi_actor_path_publisher" pkg="gazebo_ros_actor_plugin" type="$(arg actor_path_publisher_type)" output="screen">
+    <param name="startup_delay_sec" value="$(arg actor_path_publisher_delay)"/>
+  </node>
+  <node name="sgi_calculator" pkg="social_navigation_monitor" type="sgi_calculator.py" output="screen"/>
+  <node name="sii_calculator" pkg="social_navigation_monitor" type="sii_calculator.py" output="screen"/>
+
+  <node name="social_navigation_dashboard" pkg="social_navigation_monitor" type="social_navigation_dashboard.py" output="screen">
+    <!-- Cùng nguồn với path_planning_monitor: global planner GlobalPlanner, không phải NavfnROS -->
+    <param name="plan_topic" value="/move_base/GlobalPlanner/plan"/>
+  </node>
+  <node if="$(arg enable_path_density_weight_controller)"
+        name="path_density_weight_controller"
+        pkg="social_navigation_layers"
+        type="path_density_weight_controller.py"
+        output="screen">
+    <param name="plan_topic" value="$(arg path_topic_for_density_controller)"/>
+    <param name="force_min_base_weight" value="true"/>
+    <param name="density_button_state_param" value="/social_density_fusion_node/density/button_state"/>
+    <param name="degrade_when_density_unavailable" value="true"/>
+    <param name="reset_to_min_on_start" value="true"/>
+    <param name="emotion_server" value="/move_base/global_costmap/emotion_layer"/>
+    <param name="emotion_server_local" value="/move_base/local_costmap/emotion_layer"/>
+    <param name="human_object_server" value="/move_base/global_costmap/human_object_layer"/>
+    <param name="human_object_server_local" value="/move_base/local_costmap/human_object_layer"/>
+    <param name="human_group_server" value="/move_base/global_costmap/human_group_layer"/>
+    <param name="human_group_server_local" value="/move_base/local_costmap/human_group_layer"/>
+    <param name="proxemic_server" value="/move_base/global_costmap/proxemic"/>
+    <param name="proxemic_server_local" value="/move_base/local_costmap/proxemic"/>
+    <!-- Can bang giua do muot va tai tinh toan -->
+    <param name="control_rate_hz" value="3.0"/>
+    <param name="no_path_trigger_count" value="1"/>
+    <!-- Bo qua Path rong ngan ngay sau khi goal moi vao ACTIVE/PENDING -->
+    <param name="no_path_grace_after_goal_sec" value="1.5"/>
+    <param name="path_found_trigger_count" value="2"/>
+    <param name="restore_hold_after_relax_sec" value="$(arg density_restore_hold_after_relax_sec)"/>
+    <param name="path_found_stable_wall_sec" value="$(arg density_path_found_stable_wall_sec)"/>
+    <param name="restore_min_interval_sec" value="$(arg density_restore_min_interval_sec)"/>
+    <param name="enable_path_found_restore" value="$(arg density_enable_path_found_restore)"/>
+    <!-- TEB footprint infeasible (std_msgs/Bool) -> cung tang weight nhu NO PATH -->
+    <param name="use_teb_footprint_infeasible" value="true"/>
+    <param name="teb_footprint_infeasible_topic" value="/move_base/TebLocalPlannerROS/footprint_trajectory_infeasible"/>
+    <param name="teb_infeasible_trigger_count" value="2"/>
+    <param name="move_base_status_topic" value="/move_base/status"/>
+    <!-- ACTIVE + co path nhung robot khong tien trien tren odom trong mot khoang thoi gian -->
+    <param name="use_no_progress_relax" value="true"/>
+    <param name="odom_topic" value="$(arg odom_topic)"/>
+    <param name="no_progress_distance_eps" value="0.03"/>
+    <param name="no_progress_duration_sec" value="2.0"/>
+    <param name="no_progress_relax_min_interval_sec" value="1.0"/>
+    <!-- Restore theo tien trinh di chuyen: robot di du quang duong se giam W tung nac -->
+    <param name="use_progress_restore" value="true"/>
+    <param name="progress_restore_distance_m" value="1.5"/>
+    <param name="progress_restore_min_interval_sec" value="2.0"/>
+    <!-- Fallback: goal ACTIVE qua lau (du co path) van tiep tuc relax de mo duong -->
+    <param name="use_active_goal_timeout_relax" value="false"/>
+    <param name="active_goal_relax_delay_sec" value="12.0"/>
+    <param name="active_goal_relax_min_interval_sec" value="8.0"/>
+    <!-- Trigger truc tiep khi TEB bao "possible oscillation" -->
+    <param name="use_teb_oscillation_relax" value="true"/>
+    <param name="teb_oscillation_log_topic" value="/rosout_agg"/>
+    <param name="teb_oscillation_trigger_count" value="1"/>
+    <param name="teb_oscillation_relax_min_interval_sec" value="2.0"/>
+    <!-- emotion: tang bo de khu vuc cam xuc (density weight) doi nhanh hon khi restore/relax -->
+    <param name="emotion_step" value="1.0"/>
+    <param name="human_object_step" value="1.0"/>
+    <param name="human_object_max_weight" value="10.0"/>
+    <param name="human_group_step" value="10.0"/>
+    <param name="proxemic_step" value="2.5"/>
+  </node>
+  <node name="lidar_map_polygon_node" pkg="social_density_fusion" type="lidar_map_polygon_node.py" output="screen">
+    <!-- Dùng scan raw để tránh rớt dữ liệu khi nhánh scan_filtered chưa sẵn sàng -->
+    <param name="scan_topic" value="$(arg scan_raw_topic)"/>
+    <param name="tf_lookup_timeout" value="0.25"/>
+    <param name="max_tf_cache_age" value="0.80"/>
+  </node>
+  <node name="social_density_fusion_node" pkg="social_density_fusion" type="social_density_fusion_node.py" output="screen">
+    <param name="config_path" value="$(arg social_config_file)"/>
+    <param name="auto_reload_config" value="$(arg social_auto_reload_config)"/>
+    <param name="config_reload_interval_sec" value="1.0"/>
+    <param name="fusion_rate" value="20.0"/>
+    <param name="publish_rate" value="30.0"/>
+    <rosparam command="load" file="$(arg social_config_file)"/>
+  </node>
+  <node if="$(arg enable_actor_visualization)"
+        name="actor_visualization_node"
+        pkg="animated_marker_tutorial"
+        type="actor_visualization_node.py"
+        output="screen"/>
+  <node name="goal_sender_cycle_node" pkg="goal_sender" type="$(arg goal_sender_type)" output="screen">
+    <param name="scenario" value="$(arg scenario)"/>
+    <param name="num_cycles" value="$(arg num_cycles)"/>
+    <!-- Khi move_base ABORTED: chỉ bỏ qua goal nếu proxemic đã được nới tới ngưỡng max -->
+    <param name="abort_only_when_proxemic_max" value="true"/>
+    <param name="proxemic_max_weight" value="50.0"/>
+    <param name="proxemic_weight_param_global" value="/move_base/global_costmap/proxemic/proxemic_density_weight"/>
+    <param name="proxemic_weight_param_local" value="/move_base/local_costmap/proxemic/proxemic_density_weight"/>
+    <param name="abort_retry_delay_sec" value="0.5"/>
+  </node>
+  <!-- <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" output="screen"/> -->
+</launch>

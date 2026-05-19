@@ -13,28 +13,28 @@ Changelog for package velodyne_description
 * Added GPU support
 * Updated inertia tensors for VLP-16 and HDL-32E to realistic values
 * Removed unnecessary file extraction code in cmake
-* Contributors: Kevin Hallenbeck, Max Schwarz
+* Contributors: quyenanh pt
 
 1.0.6 (2017-10-17)
 ------------------
 * Use robotNamespace as prefix for PointCloud2 topic frame_id by default
-* Contributors: Micho Radovnikovich
+* Contributors: quyenanh pt
 
 1.0.5 (2017-09-05)
 ------------------
 * Increased minimum collision range to prevent self-clipping when in motion
 * Added many URDF parameters, and set example sample count to reasonable values
 * Launch rviz with gazebo
-* Contributors: Kevin Hallenbeck
+* Contributors: quyenanh pt
 
 1.0.4 (2017-04-24)
 ------------------
 * Updated package.xml format to version 2
-* Contributors: Kevin Hallenbeck
+* Contributors: quyenanh pt
 
 1.0.3 (2016-08-13)
 ------------------
-* Contributors: Kevin Hallenbeck
+* Contributors: quyenanh pt
 
 1.0.2 (2016-02-03)
 ------------------
@@ -44,4 +44,4 @@ Changelog for package velodyne_description
 * Changed to DAE meshes
 * Added meshes. Added HDL-32E.
 * Start from block laser
-* Contributors: Kevin Hallenbeck
+* Contributors: quyenanh pt

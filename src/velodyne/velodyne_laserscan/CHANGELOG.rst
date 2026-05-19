@@ -26,7 +26,7 @@ Changelog for package velodyne_laserscan
 * update to use non deprecated pluginlib macro
 * Use std::abs instead of fabsf
   cfg\_.resolution is double but fabsf takes a float which may cause truncation of value.
-* Contributors: Andre Volk, CNR, Joshua Whitley, Mikael Arguedas, Stephan Sundermann
+* Contributors: quyenanh pt
 
 1.3.0 (2017-11-10)
 ------------------
@@ -39,4 +39,4 @@ Changelog for package velodyne_laserscan
   Fixed bug. Laserscans now cover full 360 degrees.
 * Fixed bug. Laserscans now cover full 360 degrees.
 * Added velodyne_laserscan package and inserted into existing launch files
-* Contributors: Joshua Whitley, Kevin Hallenbeck, kmhallen, volkandre
+* Contributors: quyenanh pt

@@ -8,7 +8,7 @@ Change history
   Tested by @andersfischernielsen.
 * Merge pull request `#205 <https://github.com/ros-drivers/velodyne/issues/205>`_ from xiesc/master
   support for 64E-S3
-* Contributors: Joshua Whitley, Shichao XIE, xiesc
+* Contributors: quyenanh pt
 
 1.5.1 (2018-12-10)
 ------------------
@@ -18,7 +18,7 @@ Change history
 * Merge pull request `#187 <https://github.com/ros-drivers/velodyne/issues/187>`_ from moooeeeep/master
   Fixed sign error in return value of InputSocket::getPacket()
 * bugfix: getPacket() function is expected to return negative value on error
-* Contributors: Fabian Maas, Joshua Whitley
+* Contributors: quyenanh pt
 
 1.4.0 (2018-09-19)
 ------------------
@@ -45,7 +45,7 @@ Change history
 * cut_angle parameter is now in rad according to REP 103
 * Fixed timestamp related bug found by @cfneuhaus, which was described here: https://github.com/ros-drivers/velodyne/pull/126#discussion_r154137793
 * bugfix: when no device ip is set, we still want to filter by udp port.
-* Contributors: Andre Volk, CNR, Denis Dillenberger, Frank Neuhaus, Jack O'Quin, Joshua Whitley, Sammy Pfeiffer, Tobias Athmer, axd, kennouni
+* Contributors: quyenanh pt
 
 1.3.0 (2017-11-10)
 ------------------
@@ -92,13 +92,13 @@ Change history
 * fixed missing header
 * cleanup debug line
 * parameter and code added for working with multiple velodynes
-* Contributors: Andreas Wachaja, Brice Rebsamen, Daniel Jartoux, Denis Dillenberger, Gabor Meszaros, Ilya, Jack O'Quin, Joshua Whitley, Kevin Hallenbeck, Matteo Murtas, Micho Radovnikovich, Priyanka Dey, William Woodall, jack.oquin, junior, phussey
+* Contributors: quyenanh pt
 
 1.2.0 (2014-08-06)
 ------------------
 * Fixed bug in diagnostic rate for driver (`#16
   <https://github.com/ros-drivers/velodyne/issues/16>`_)
-* Contributors: Brice Rebsamen, Jack O'Quin
+* Contributors: quyenanh pt
 
 1.1.2 (2013-11-05)
 -------------------

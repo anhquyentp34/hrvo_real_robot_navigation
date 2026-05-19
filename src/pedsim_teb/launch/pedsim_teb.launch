@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+  <!--
+    - use_pedbot_odometry:=1 (mặc định): bật mô phỏng diff PedSim (pedbot) — TF odom→base_footprint động.
+    - use_pedbot_odometry:=0: TF tĩnh odom→base_footprint, không chạy pedbot (robot không đi theo cmd_vel).
+  -->
+  <arg name="use_pedbot_odometry" default="1"/>
+
+  <!-- URDF diff_bot + joint_state_publisher + robot_state_publisher -->
+  <arg name="urdf_xacro" default="$(find diff_description)/urdf/diff_bot.urdf.xacro"/>
+  <arg name="gpu" default="false"/>
+  <arg name="velodyne_visualize" default="false"/>
+  <include file="$(find pedsim_teb)/launch/includes/diff_robot_description.launch.xml">
+    <arg name="urdf_xacro" value="$(arg urdf_xacro)"/>
+    <arg name="gpu" value="$(arg gpu)"/>
+    <arg name="velodyne_visualize" value="$(arg velodyne_visualize)"/>
+  </include>
+
+  <!-- TF odom → base_footprint chỉ khi không dùng pedbot (pedbot tự phát TF động) -->
+  <node unless="$(eval int(arg('use_pedbot_odometry')) == 1)" pkg="tf2_ros" type="static_transform_publisher"
+        name="odom_to_base_footprint"
+        args="0 0 0 0 0 0 odom base_footprint"/>
+
+  <!-- run environment from pedsim -->
+  <include file="$(find pedsim_simulator)/launch/simple_pedestrians.launch" if="$(eval int(arg('use_pedbot_odometry')) == 1)">
+    <arg name="visualize" value="false"/>
+    <arg name="simulation_factor" value="3.0"/>
+    <arg name="with_robot" value="true"/>
+  </include>
+
+  <include file="$(find pedsim_simulator)/launch/simple_pedestrians.launch" unless="$(eval int(arg('use_pedbot_odometry')) == 1)">
+    <arg name="visualize" value="false"/>
+    <arg name="simulation_factor" value="3.0"/>
+    <arg name="with_robot" value="false"/>
+  </include>
+
+  <!-- Rviz (tắt nếu không cần GUI: rviz:=false) -->
+  <arg name="rviz" default="true"/>
+  <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rviz" args="-d $(find pedsim_teb)/config/rviz/pedsim_teb.rviz"/>
+
+  <!-- obstacle sensor -->
+  <include file="$(find pedsim_sensors)/launch/obstacle_pcd_sensor.launch">
+    <arg name="origin_x" value="5.0"/>
+    <arg name="origin_y" value="5.0"/>
+    <arg name="range" value="15.0"/>
+  </include>
+
+  <!-- People sensor -->
+  <include file="$(find pedsim_sensors)/launch/people_pcd_sensor.launch">
+    <arg name="origin_x" value="0.0"/>
+    <arg name="origin_y" value="0.0"/>
+  </include>
+
+  <!-- /odom cho TEB (simulate_diff_drive chỉ phát TF, không có nav_msgs/Odometry) -->
+  <node pkg="pedsim_teb" type="odom_from_tf.py" name="odom_from_tf" output="screen">
+    <param name="odom_frame" value="odom"/>
+    <param name="base_frame" value="base_footprint"/>
+    <param name="rate" value="50"/>
+  </node>
+
+  <!-- navigation stack - move_base -->
+  <include file="$(find pedsim_teb)/launch/includes/move_base.launch.xml"/>
+</launch>

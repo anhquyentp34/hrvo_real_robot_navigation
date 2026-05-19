@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!-- Spawn diff_bot (diff_description) vào Gazebo — cùng kiểu robot_gazebo/diff_bot.launch.xml, thêm velodyne_visualize. -->
+<launch>
+  <arg name="urdf_xacro" default="$(find diff_description)/urdf/diff_bot.urdf.xacro"/>
+  <arg name="gpu" default="false"/>
+  <arg name="velodyne_visualize" default="true"/>
+  <arg name="pose_initial_x" default="5.0"/>
+  <arg name="pose_initial_y" default="5.0"/>
+  <arg name="pose_initial_theta" default="0.0"/>
+  <arg name="z" default="0.1"/>
+  <arg name="gazebo_model_name" default="mobile_base"/>
+
+  <param name="robot_description"
+         command="$(find xacro)/xacro $(arg urdf_xacro) gpu:=$(arg gpu) velodyne_visualize:=$(arg velodyne_visualize)"/>
+
+  <node name="spawn_diff_bot_model" pkg="gazebo_ros" type="spawn_model" output="screen"
+        args="-x $(arg pose_initial_x) -y $(arg pose_initial_y) -z $(arg z) -Y $(arg pose_initial_theta) -unpause -urdf -param robot_description -model $(arg gazebo_model_name)"/>
+</launch>

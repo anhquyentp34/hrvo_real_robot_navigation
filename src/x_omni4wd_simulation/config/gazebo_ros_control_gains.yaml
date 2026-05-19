@@ -1,0 +1,14 @@
+# PID cho plugin gazebo_ros_control (Gazebo 11 / ROS Noetic).
+# Khớp tên joint trong URDF: *_wheel_link_joint
+# Load vào namespace /x_omni4wd (cùng ns controller_manager).
+
+gazebo_ros_control:
+  pid_gains:
+    front_left_wheel_link_joint:
+      {p: 8.0, i: 0.0, d: 0.08, i_clamp_min: -1.0, i_clamp_max: 1.0}
+    rear_left_wheel_link_joint:
+      {p: 8.0, i: 0.0, d: 0.08, i_clamp_min: -1.0, i_clamp_max: 1.0}
+    rear_right_wheel_link_joint:
+      {p: 8.0, i: 0.0, d: 0.08, i_clamp_min: -1.0, i_clamp_max: 1.0}
+    front_right_wheel_link_joint:
+      {p: 8.0, i: 0.0, d: 0.08, i_clamp_min: -1.0, i_clamp_max: 1.0}

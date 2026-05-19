@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<!--
+  Chỉ chạy node teleop bàn phím (pynput) cho diff_bot — publish /cmd_vel (hoặc cmd_vel_topic).
+
+  Gazebo + RViz + plugin diff_drive — gộp sẵn trong diff_control:
+    roslaunch diff_control gazebo_diff_velocity.launch teleop_backend:=keyboard
+
+  Hoặc chỉ teleop (robot/Gazebo đã chạy):
+    roslaunch diff_control gazebo_diff_velocity.launch teleop:=false
+    roslaunch diff_keyboard_teleop diff_keyboard_teleop.launch
+
+  Hoặc gửi qua gate (diff_control):
+    roslaunch diff_keyboard_teleop diff_keyboard_teleop.launch cmd_vel_topic:=/cmd_vel_raw
+-->
+<launch>
+  <arg name="cmd_vel_topic" default="/cmd_vel"/>
+  <arg name="invert_angular_z" default="false"/>
+
+  <arg name="max_vx" default="0.5"/>
+  <arg name="max_wz" default="1.0"/>
+  <arg name="accel_linear" default="1.5"/>
+  <arg name="accel_angular" default="2.5"/>
+  <arg name="publish_rate" default="50.0"/>
+  <arg name="use_arrow_keys" default="true"/>
+
+  <node pkg="diff_keyboard_teleop" type="diff_keyboard_teleop.py"
+        name="diff_keyboard_teleop" output="screen">
+    <param name="cmd_topic" value="$(arg cmd_vel_topic)"/>
+    <param name="max_vx" value="$(arg max_vx)"/>
+    <param name="max_wz" value="$(arg max_wz)"/>
+    <param name="accel_linear" value="$(arg accel_linear)"/>
+    <param name="accel_angular" value="$(arg accel_angular)"/>
+    <param name="publish_rate" value="$(arg publish_rate)"/>
+    <param name="use_arrow_keys" value="$(arg use_arrow_keys)"/>
+    <param name="invert_angular_z" value="$(arg invert_angular_z)"/>
+    <param name="vx_forward" value="$(arg max_vx)"/>
+    <param name="vx_backward" value="$(arg max_vx)"/>
+    <param name="wz_ccw" value="$(arg max_wz)"/>
+    <param name="wz_cw" value="$(arg max_wz)"/>
+  </node>
+</launch>

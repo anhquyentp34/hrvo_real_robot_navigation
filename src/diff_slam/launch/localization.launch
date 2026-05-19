@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch> 
+ <arg name="custom_amcl_launch_file" default="$(find diff_slam)/launch/amcl.launch"/>
+
+ <!-- Map Server Arguments -->
+ <arg name="map_file" default="$(find diff_slam)/maps/map_new1.yaml"/>
+ <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)">
+	<param name="frame_id" value="map"/>
+ </node>
+
+ <include file="$(find diff_gazebo)/launch/diff_model.launch"/>
+
+ <include file="$(arg custom_amcl_launch_file)"/>
+
+  <!-- <node name="rviz" pkg="rviz" type="rviz" respawn="false"
+		args="-d $(find diff_rviz)/rviz/amcl.rviz"/> -->
+
+
+</launch>

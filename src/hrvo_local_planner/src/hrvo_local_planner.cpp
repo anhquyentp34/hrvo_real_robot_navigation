@@ -19,6 +19,7 @@ static inline bool isFinite(double x) { return std::isfinite(x); }
 namespace {
 std::mutex g_model_states_mtx;
 std::mutex g_people_mtx;
+std::mutex g_hrvo_input_mtx;
 }
 
 static inline double clampd(double v, double lo, double hi)
@@ -168,6 +169,14 @@ void HRVOLocalPlanner::trackedPeopleCb(const people_msgs::People::ConstPtr& msg)
   last_people_stamp_ = stamp;
 }
 
+void HRVOLocalPlanner::hrvoInputCb(const hrvo_local_planner::HRVOInput::ConstPtr& msg)
+{
+  std::lock_guard<std::mutex> lk(g_hrvo_input_mtx);
+  last_hrvo_input_ = *msg;
+  have_hrvo_input_ = true;
+  last_hrvo_input_stamp_ = ros::Time::now();
+}
+
 void HRVOLocalPlanner::initialize(std::string name,
                                   tf2_ros::Buffer* tf,
                                   costmap_2d::Costmap2DROS* costmap_ros)
@@ -181,8 +190,10 @@ void HRVOLocalPlanner::initialize(std::string name,
   ros::NodeHandle nh("~/" + name);
 
   nh.param("max_vel_x", max_vel_x_, 0.8);
+  nh.param("max_vel_y", max_vel_y_, 0.0);
   nh.param("max_vel_theta", max_vel_theta_, 1.0);
   nh.param("acc_lim_x", acc_lim_x_, 1.0);
+  nh.param("acc_lim_y", acc_lim_y_, acc_lim_x_);
   nh.param("acc_lim_theta", acc_lim_theta_, 2.0);
 
   nh.param("xy_goal_tolerance", xy_goal_tol_, 0.20);
@@ -194,6 +205,8 @@ void HRVOLocalPlanner::initialize(std::string name,
 
   nh.param("neighbor_dist", neighbor_dist_, 8.0);
   nh.param("max_neighbors", max_neighbors_, 30);
+  nh.param("max_other_agents_for_hrvo", max_other_agents_for_hrvo_, 80);
+  nh.param("static_agent_speed_thresh", static_agent_speed_thresh_, 0.05);
   nh.param("robot_radius", robot_radius_, 0.30);
   nh.param("goal_radius", goal_radius_, 0.20);
   nh.param("pref_speed", pref_speed_, 0.55);
@@ -202,9 +215,16 @@ void HRVOLocalPlanner::initialize(std::string name,
   nh.param("max_accel", max_accel_, 1.2);
   nh.param("time_step", time_step_, 0.10);
 
+  nh.param("holonomic_mode", holonomic_mode_, false);
   nh.param("heading_kp", heading_kp_, 2.5);
+  nh.param("heading_brake_angle", heading_brake_angle_, 1.05);
+  nh.param("min_speed_turning_scale", min_speed_turning_scale_, 0.15);
   nh.param("slowdown_cos", slowdown_cos_, true);
   nh.param("stop_yaw_error", stop_yaw_error_, 1.0);
+  nh.param("rotate_enter_error", rotate_enter_error_, 0.20);
+  nh.param("rotate_exit_error", rotate_exit_error_, 0.10);
+  nh.param("allow_backward", allow_backward_, true);
+  nh.param("max_vel_x_backwards", max_vel_x_backwards_, -1.0);
 
   nh.param("use_gazebo_agents", use_gazebo_agents_, true);
   nh.param("robot_model_name", robot_model_name_, std::string(""));
@@ -220,6 +240,16 @@ void HRVOLocalPlanner::initialize(std::string name,
   nh.param("tracked_person_radius", tracked_person_radius_, 0.42);
   nh.param("people_velocity_alpha", people_velocity_alpha_, 0.6);
   nh.param("min_people_speed_for_hrvo", min_people_speed_for_hrvo_, 0.05);
+
+  nh.param("use_hrvo_input_topic", use_hrvo_input_topic_, false);
+  nh.param("hrvo_input_topic", hrvo_input_topic_, std::string("/hrvo/input"));
+  nh.param("hrvo_input_timeout", hrvo_input_timeout_, 0.5);
+  nh.param("use_hrvo_input_robot_state", use_hrvo_input_robot_state_, true);
+
+  nh.param("agent_fusion_policy", agent_fusion_policy_, std::string("merge"));
+  nh.param("agent_duplicate_radius", agent_duplicate_radius_, 0.35);
+  nh.param("gazebo_model_states_topic", gazebo_model_states_topic_,
+           std::string("/gazebo/model_states"));
 
   nh.param("allow_world_as_global_when_tf_fails", allow_world_as_global_when_tf_fails_, true);
   nh.param("model_states_timeout", model_states_timeout_, 0.5);
@@ -245,14 +275,34 @@ void HRVOLocalPlanner::initialize(std::string name,
 
   local_plan_pub_ = nh.advertise<nav_msgs::Path>("local_plan", 1);
 
+  ros::NodeHandle nh_root;
+  if (use_hrvo_input_topic_) {
+    hrvo_input_sub_ = nh_root.subscribe(hrvo_input_topic_, 1,
+                                        &HRVOLocalPlanner::hrvoInputCb, this);
+  }
   if (use_gazebo_agents_) {
-    model_states_sub_ = nh.subscribe("/gazebo/model_states", 1,
-                                     &HRVOLocalPlanner::modelStatesCb, this);
+    model_states_sub_ = nh_root.subscribe(gazebo_model_states_topic_, 1,
+                                         &HRVOLocalPlanner::modelStatesCb, this);
+  }
+  if (use_tracked_people_) {
+    tracked_people_sub_ = nh_root.subscribe(tracked_people_topic_, 1,
+                                            &HRVOLocalPlanner::trackedPeopleCb, this);
   }
 
-  if (use_tracked_people_) {
-    tracked_people_sub_ = nh.subscribe(tracked_people_topic_, 1,
-                                       &HRVOLocalPlanner::trackedPeopleCb, this);
+  if (!use_hrvo_input_topic_ && !use_gazebo_agents_ && !use_tracked_people_) {
+    ROS_WARN("[HRVO] All dynamic agent sources are disabled "
+             "(use_hrvo_input_topic, use_gazebo_agents, use_tracked_people). "
+             "HRVO will not model other moving agents.");
+  } else {
+    ROS_INFO("[HRVO] agent fusion policy=%s duplicate_radius=%.3f "
+             "sources: hrvo_input=%d gazebo=%d people=%d robot_pose_from_input=%d holonomic=%d",
+             agent_fusion_policy_.c_str(),
+             agent_duplicate_radius_,
+             static_cast<int>(use_hrvo_input_topic_),
+             static_cast<int>(use_gazebo_agents_),
+             static_cast<int>(use_tracked_people_),
+             static_cast<int>(use_hrvo_input_robot_state_),
+             static_cast<int>(holonomic_mode_));
   }
 
   initialized_ = true;
@@ -271,12 +321,46 @@ bool HRVOLocalPlanner::setPlan(const std::vector<geometry_msgs::PoseStamped>& or
   sim_initialized_ = false;
   other_agent_ids_.clear();
   step_count_ = 0;
+  rotate_in_place_mode_ = true;
   return true;
 }
 
 bool HRVOLocalPlanner::getRobotPose(geometry_msgs::PoseStamped& pose_out) const
 {
-  return costmap_ros_ && costmap_ros_->getRobotPose(pose_out);
+  if (use_hrvo_input_robot_state_ && use_hrvo_input_topic_) {
+    hrvo_local_planner::HRVOInput snap;
+    ros::Time stamp;
+    bool ok = false;
+    {
+      std::lock_guard<std::mutex> lk(g_hrvo_input_mtx);
+      if (have_hrvo_input_) {
+        snap = last_hrvo_input_;
+        stamp = last_hrvo_input_stamp_;
+        ok = true;
+      }
+    }
+    if (ok && (ros::Time::now() - stamp).toSec() <= hrvo_input_timeout_) {
+      const std::string src_frame =
+          snap.header.frame_id.empty() ? "odom" : snap.header.frame_id;
+      const std::string dst_frame =
+          costmap_ros_ ? costmap_ros_->getGlobalFrameID() : "map";
+
+      geometry_msgs::Pose pose_dst;
+      if (transformPose2D(tf_, src_frame, dst_frame, snap.robot_pose, pose_dst) ||
+          allow_world_as_global_when_tf_fails_) {
+        pose_out.header.stamp = ros::Time::now();
+        pose_out.header.frame_id = dst_frame;
+        pose_out.pose = pose_dst;
+        return true;
+      }
+    }
+  }
+
+  if (costmap_ros_ && costmap_ros_->getRobotPose(pose_out)) {
+    return true;
+  }
+
+  return false;
 }
 
 geometry_msgs::PoseStamped HRVOLocalPlanner::getLookaheadTarget(
@@ -427,23 +511,139 @@ std::vector<HRVOLocalPlanner::OtherAgent> HRVOLocalPlanner::buildOtherAgentsFrom
   return out;
 }
 
-std::vector<HRVOLocalPlanner::OtherAgent> HRVOLocalPlanner::buildOtherAgents() const
+std::vector<HRVOLocalPlanner::OtherAgent> HRVOLocalPlanner::buildOtherAgentsFromHRVOInput() const
 {
   std::vector<OtherAgent> out;
-  std::unordered_map<std::string, std::size_t> seen;
+  if (!use_hrvo_input_topic_) return out;
 
-  auto push_unique = [&](const std::vector<OtherAgent>& src) {
-    for (const auto& a : src) {
-      if (seen.find(a.name) != seen.end()) continue;
-      seen[a.name] = out.size();
-      out.push_back(a);
+  hrvo_local_planner::HRVOInput snap;
+  ros::Time stamp;
+  bool ok = false;
+  {
+    std::lock_guard<std::mutex> lk(g_hrvo_input_mtx);
+    if (have_hrvo_input_) {
+      snap = last_hrvo_input_;
+      stamp = last_hrvo_input_stamp_;
+      ok = true;
     }
+  }
+  if (!ok) return out;
+  if ((ros::Time::now() - stamp).toSec() > hrvo_input_timeout_) return out;
+
+  for (const auto& a_in : snap.agents) {
+    if (!isFinite(a_in.x) || !isFinite(a_in.y) || !isFinite(a_in.vx) || !isFinite(a_in.vy)) {
+      continue;
+    }
+    OtherAgent a;
+    a.name = "hrvo_" + std::to_string(a_in.id);
+    a.pos = hrvo::Vector2(static_cast<float>(a_in.x), static_cast<float>(a_in.y));
+    a.vel = hrvo::Vector2(static_cast<float>(a_in.vx), static_cast<float>(a_in.vy));
+    a.radius = static_cast<float>(std::max(0.05, a_in.radius));
+    out.push_back(a);
+  }
+  return out;
+}
+
+bool HRVOLocalPlanner::nearExistingAgent(const OtherAgent& candidate,
+                                         const std::vector<OtherAgent>& out,
+                                         double duplicate_radius)
+{
+  if (duplicate_radius <= 0.0) {
+    return false;
+  }
+  const double r2 = duplicate_radius * duplicate_radius;
+  for (const auto& b : out) {
+    const double dx = static_cast<double>(candidate.pos.getX() - b.pos.getX());
+    const double dy = static_cast<double>(candidate.pos.getY() - b.pos.getY());
+    if (dx * dx + dy * dy <= r2) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::vector<HRVOLocalPlanner::OtherAgent> HRVOLocalPlanner::buildOtherAgents() const
+{
+  std::vector<OtherAgent> fused;
+  const bool merge_mode = (agent_fusion_policy_ != "hrvo_input_only");
+
+  if (use_hrvo_input_topic_) {
+    fused = buildOtherAgentsFromHRVOInput();
+  }
+
+  if (!merge_mode) {
+    return fused;
+  }
+
+  const double dr = std::max(0.0, agent_duplicate_radius_);
+
+  if (use_gazebo_agents_) {
+    for (const auto& g : buildOtherAgentsFromGazebo()) {
+      if (!nearExistingAgent(g, fused, dr)) {
+        fused.push_back(g);
+      }
+    }
+  }
+
+  if (use_tracked_people_) {
+    for (const auto& p : buildOtherAgentsFromTrackedPeople()) {
+      if (!nearExistingAgent(p, fused, dr)) {
+        fused.push_back(p);
+      }
+    }
+  }
+
+  return fused;
+}
+
+void HRVOLocalPlanner::prioritizeOtherAgents(std::vector<OtherAgent>& agents,
+                                             double robot_x, double robot_y) const
+{
+  const std::size_t cap =
+      static_cast<std::size_t>(std::max(1, max_other_agents_for_hrvo_));
+  if (agents.size() <= cap) {
+    return;
+  }
+
+  auto dist2 = [robot_x, robot_y](const OtherAgent& a) {
+    const double dx = static_cast<double>(a.pos.getX()) - robot_x;
+    const double dy = static_cast<double>(a.pos.getY()) - robot_y;
+    return dx * dx + dy * dy;
+  };
+  auto is_static = [this](const OtherAgent& a) {
+    return std::hypot(static_cast<double>(a.vel.getX()),
+                      static_cast<double>(a.vel.getY())) <= static_agent_speed_thresh_;
+  };
+  auto by_dist = [&dist2](const OtherAgent& a, const OtherAgent& b) {
+    return dist2(a) < dist2(b);
   };
 
-  if (use_tracked_people_) push_unique(buildOtherAgentsFromTrackedPeople());
-  if (use_gazebo_agents_)  push_unique(buildOtherAgentsFromGazebo());
+  std::vector<OtherAgent> stat;
+  std::vector<OtherAgent> dyn;
+  stat.reserve(agents.size());
+  dyn.reserve(agents.size());
+  for (auto& a : agents) {
+    if (is_static(a)) {
+      stat.push_back(a);
+    } else {
+      dyn.push_back(a);
+    }
+  }
+  std::sort(stat.begin(), stat.end(), by_dist);
+  std::sort(dyn.begin(), dyn.end(), by_dist);
 
-  return out;
+  const std::size_t n_stat_cap = std::min(stat.size(), (cap * 2) / 3);
+  const std::size_t n_dyn_cap = std::min(dyn.size(), cap - n_stat_cap);
+
+  std::vector<OtherAgent> trimmed;
+  trimmed.reserve(n_stat_cap + n_dyn_cap);
+  for (std::size_t i = 0; i < n_stat_cap; ++i) {
+    trimmed.push_back(stat[i]);
+  }
+  for (std::size_t i = 0; i < n_dyn_cap; ++i) {
+    trimmed.push_back(dyn[i]);
+  }
+  agents.swap(trimmed);
 }
 
 void HRVOLocalPlanner::resetSimulator(const geometry_msgs::PoseStamped& robot_pose,
@@ -462,8 +662,12 @@ void HRVOLocalPlanner::resetSimulator(const geometry_msgs::PoseStamped& robot_po
   last_goal_pos_ = hrvo::Vector2(tx, ty);
   robot_goal_id_ = sim_->addGoal(last_goal_pos_);
 
-  const float rvx = static_cast<float>(last_cmd_.linear.x * std::cos(yaw));
-  const float rvy = static_cast<float>(last_cmd_.linear.x * std::sin(yaw));
+  const double c_yaw = std::cos(yaw);
+  const double s_yaw = std::sin(yaw);
+  const double vbx = last_cmd_.linear.x;
+  const double vby = last_cmd_.linear.y;
+  const float rvx = static_cast<float>(vbx * c_yaw - vby * s_yaw);
+  const float rvy = static_cast<float>(vbx * s_yaw + vby * c_yaw);
 
   robot_agent_id_ = sim_->addAgent(
       hrvo::Vector2(rx, ry),
@@ -523,8 +727,17 @@ bool HRVOLocalPlanner::isCmdSafe(const geometry_msgs::PoseStamped& robot_pose,
   double yaw = poseYaw(robot_pose);
 
   for (int i = 0; i < N; ++i) {
-    x += cmd.linear.x * std::cos(yaw) * dt;
-    y += cmd.linear.x * std::sin(yaw) * dt;
+    if (holonomic_mode_) {
+      const double vgx =
+          cmd.linear.x * std::cos(yaw) - cmd.linear.y * std::sin(yaw);
+      const double vgy =
+          cmd.linear.x * std::sin(yaw) + cmd.linear.y * std::cos(yaw);
+      x += vgx * dt;
+      y += vgy * dt;
+    } else {
+      x += cmd.linear.x * std::cos(yaw) * dt;
+      y += cmd.linear.x * std::sin(yaw) * dt;
+    }
     yaw += cmd.angular.z * dt;
 
     if (!isStateSafe(x, y)) return false;
@@ -709,7 +922,32 @@ bool HRVOLocalPlanner::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     return true;
   }
 
-  const geometry_msgs::PoseStamped target = getLookaheadTarget(robot_pose);
+  geometry_msgs::PoseStamped target = getLookaheadTarget(robot_pose);
+  {
+    hrvo_local_planner::HRVOInput snap;
+    ros::Time stamp;
+    bool ok = false;
+    {
+      std::lock_guard<std::mutex> lk(g_hrvo_input_mtx);
+      if (have_hrvo_input_) {
+        snap = last_hrvo_input_;
+        stamp = last_hrvo_input_stamp_;
+        ok = true;
+      }
+    }
+    if (ok && (ros::Time::now() - stamp).toSec() <= hrvo_input_timeout_) {
+      const auto& tp = snap.target.pose.position;
+      const bool has_target_header =
+          !snap.target.header.frame_id.empty() || !snap.target.header.stamp.isZero();
+      if (has_target_header && isFinite(tp.x) && isFinite(tp.y)) {
+        target = snap.target;
+        if (target.header.frame_id.empty()) {
+          target.header.frame_id =
+              costmap_ros_ ? costmap_ros_->getGlobalFrameID() : "map";
+        }
+      }
+    }
+  }
 
   const hrvo::Vector2 new_goal(static_cast<float>(target.pose.position.x),
                                static_cast<float>(target.pose.position.y));
@@ -727,7 +965,8 @@ bool HRVOLocalPlanner::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     require_reset = true;
   }
 
-  const auto others = buildOtherAgents();
+  auto others = buildOtherAgents();
+  prioritizeOtherAgents(others, robot_pose.pose.position.x, robot_pose.pose.position.y);
   std::unordered_set<std::string> seen;
   seen.reserve(others.size());
 
@@ -799,8 +1038,12 @@ bool HRVOLocalPlanner::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
                                          static_cast<float>(robot_pose.pose.position.y)));
     sim_->setAgentOrientation(robot_agent_id_, static_cast<float>(yaw));
 
-    const float rvx = static_cast<float>(last_cmd_.linear.x * std::cos(yaw));
-    const float rvy = static_cast<float>(last_cmd_.linear.x * std::sin(yaw));
+    const double c_yaw = std::cos(yaw);
+    const double s_yaw = std::sin(yaw);
+    const double vbx = last_cmd_.linear.x;
+    const double vby = last_cmd_.linear.y;
+    const float rvx = static_cast<float>(vbx * c_yaw - vby * s_yaw);
+    const float rvy = static_cast<float>(vbx * s_yaw + vby * c_yaw);
     sim_->setAgentVelocity(robot_agent_id_, hrvo::Vector2(rvx, rvy));
 
     for (const auto& a : others) {
@@ -824,8 +1067,12 @@ bool HRVOLocalPlanner::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
                                        static_cast<float>(robot_pose.pose.position.y)));
   sim_->setAgentOrientation(robot_agent_id_, static_cast<float>(yaw));
   {
-    const float rvx = static_cast<float>(last_cmd_.linear.x * std::cos(yaw));
-    const float rvy = static_cast<float>(last_cmd_.linear.x * std::sin(yaw));
+    const double c_yaw = std::cos(yaw);
+    const double s_yaw = std::sin(yaw);
+    const double vbx = last_cmd_.linear.x;
+    const double vby = last_cmd_.linear.y;
+    const float rvx = static_cast<float>(vbx * c_yaw - vby * s_yaw);
+    const float rvy = static_cast<float>(vbx * s_yaw + vby * c_yaw);
     sim_->setAgentVelocity(robot_agent_id_, hrvo::Vector2(rvx, rvy));
   }
 
@@ -846,111 +1093,113 @@ bool HRVOLocalPlanner::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
       (vnorm_hrvo >= min_vnorm_dir_) ? std::atan2(vy_hrvo, vx_hrvo)
                                      : std::atan2(ty - ry, tx - rx);
 
-  double desired_speed = std::min(vnorm_hrvo, max_vel_x_);
-  const double heading_err = std::fabs(angles::shortest_angular_distance(yaw, desired_dir));
+  const double heading_err_signed = angles::shortest_angular_distance(yaw, desired_dir);
+  const double heading_err_abs = std::fabs(heading_err_signed);
+  const double c_yaw = std::cos(yaw);
+  const double s_yaw = std::sin(yaw);
+  const double vbx_hrvo = c_yaw * vx_hrvo + s_yaw * vy_hrvo;
+  const double vby_hrvo = -s_yaw * vx_hrvo + c_yaw * vy_hrvo;
+  const double vel_body_angle =
+      (vnorm_hrvo >= min_vnorm_dir_) ? std::atan2(vby_hrvo, vbx_hrvo) : 0.0;
+  const double axial_align_err =
+      (vnorm_hrvo >= min_vnorm_dir_)
+          ? std::fabs(angles::shortest_angular_distance(0.0, vel_body_angle))
+          : heading_err_abs;
 
-  if (slowdown_cos_) {
-    desired_speed *= std::max(0.0, std::cos(std::min(heading_err, M_PI_2)));
+  const double omega_desired =
+      clampd(heading_kp_ * heading_err_signed, -max_vel_theta_, max_vel_theta_);
+  const double turn_brake_angle = std::max(1e-3, heading_brake_angle_);
+  double heading_speed_scale = clampd(
+      1.0 - heading_err_abs / turn_brake_angle,
+      clampd(min_speed_turning_scale_, 0.0, 1.0),
+      1.0);
+  if (allow_backward_ && !holonomic_mode_ && vnorm_hrvo >= min_vnorm_dir_) {
+    heading_speed_scale = clampd(
+        std::fabs(std::cos(vel_body_angle)),
+        clampd(min_speed_turning_scale_, 0.0, 1.0),
+        1.0);
   }
-
-  const double desired_w = clampd(heading_kp_ *
-                                  angles::shortest_angular_distance(yaw, desired_dir),
-                                  -max_vel_theta_, max_vel_theta_);
-
-  geometry_msgs::Twist best_cmd;
-  double best_score = -std::numeric_limits<double>::infinity();
-  bool found_safe = false;
-
-  auto scoreCandidate = [&](double v_cmd, double w_cmd) -> double
-  {
-    const double H = std::max(0.4, std::min(1.0, safety_rollout_time_));
-    const RolloutEval ev = evaluateRollout(robot_pose, v_cmd, w_cmd, H);
-    if (!ev.safe) return -1e9;
-
-    const double yaw_mid = yaw + 0.5 * w_cmd * H;
-    const double hrvo_align = std::cos(angles::shortest_angular_distance(yaw_mid, desired_dir));
-
-    const double to_goal_dir = std::atan2(ty - ev.y_end, tx - ev.x_end);
-    const double goal_align = std::cos(angles::shortest_angular_distance(ev.yaw_end, to_goal_dir));
-
-    const double speed_term = -std::fabs(v_cmd - desired_speed);
-    const double turn_term  = -std::fabs(w_cmd - desired_w);
-    const double spin_pen   = -std::fabs(w_cmd);
-    const double jerk_pen   = -std::fabs(v_cmd - last_cmd_.linear.x)
-                              - 0.3 * std::fabs(w_cmd - last_cmd_.angular.z);
-
-    const double clearance_norm =
-        clampd(ev.min_clearance / std::max(0.15, clearance_probe_dist_), 0.0, 1.0);
-
-    const double obstacle_pen = -(0.7 * ev.avg_cost_norm + 0.3 * ev.max_cost_norm);
-
-    double near_goal_bonus = 0.0;
-    if (d_goal < 1.0) {
-      near_goal_bonus = -0.2 * std::fabs(w_cmd);
-    }
-
-    return hrvo_align_weight_ * hrvo_align +
-           goal_align_weight_ * goal_align +
-           speed_weight_ * speed_term -
-           turn_weight_ * std::fabs(turn_term) -
-           spin_weight_ * std::fabs(spin_pen) +
-           clearance_weight_ * clearance_norm +
-           obstacle_cost_weight_ * obstacle_pen +
-           jerk_weight_ * jerk_pen +
-           near_goal_bonus;
-  };
-
-  std::vector<double> v_samples;
-  std::vector<double> w_samples;
-
-  v_samples.push_back(0.0);
-  v_samples.push_back(std::min(max_vel_x_, desired_speed));
-  v_samples.push_back(std::min(max_vel_x_, last_cmd_.linear.x));
-  for (int i = 1; i <= 8; ++i) {
-    v_samples.push_back(max_vel_x_ * static_cast<double>(i) / 8.0);
-  }
-
-  w_samples.push_back(desired_w);
-  w_samples.push_back(last_cmd_.angular.z);
-  for (int i = -8; i <= 8; ++i) {
-    w_samples.push_back(max_vel_theta_ * static_cast<double>(i) / 8.0);
-  }
-
-  for (double v_cmd : v_samples) {
-    v_cmd = clampd(v_cmd, 0.0, max_vel_x_);
-
-    for (double w_cmd : w_samples) {
-      w_cmd = clampd(w_cmd, -max_vel_theta_, max_vel_theta_);
-
-      geometry_msgs::Twist cand;
-      cand.linear.x = v_cmd;
-      cand.angular.z = w_cmd;
-
-      if (d_goal < 1.0) {
-        const double scale = clampd(d_goal / 1.0, 0.20, 1.0);
-        cand.linear.x *= scale;
-      }
-
-      if (std::fabs(angles::shortest_angular_distance(yaw, desired_dir)) > stop_yaw_error_) {
-        cand.linear.x = std::min(cand.linear.x, 0.06);
-      }
-
-      if (!isCmdSafe(robot_pose, cand)) continue;
-
-      const double score = scoreCandidate(cand.linear.x, cand.angular.z);
-      if (score > best_score) {
-        best_score = score;
-        best_cmd = cand;
-        found_safe = true;
-      }
-    }
+  // Hysteresis rotate-in-place (tắt khi cho phép lùi — dùng vbx âm thay vì quay 180°).
+  const double enter_rot = std::max(1e-3, rotate_enter_error_);
+  const double exit_rot = std::max(1e-3, std::min(rotate_exit_error_, enter_rot));
+  if (allow_backward_ && !holonomic_mode_) {
+    rotate_in_place_mode_ = false;
+  } else if (rotate_in_place_mode_) {
+    if (heading_err_abs <= exit_rot) rotate_in_place_mode_ = false;
+  } else {
+    if (heading_err_abs >= enter_rot) rotate_in_place_mode_ = true;
   }
 
   geometry_msgs::Twist out;
-  if (found_safe) {
-    out = best_cmd;
+  if (holonomic_mode_) {
+    const double c_yaw = std::cos(yaw);
+    const double s_yaw = std::sin(yaw);
+    // Convert global HRVO velocity into robot base frame command.
+    double vbx = c_yaw * vx_hrvo + s_yaw * vy_hrvo;
+    double vby = -s_yaw * vx_hrvo + c_yaw * vy_hrvo;
+    vbx = clampd(vbx, -max_vel_x_, max_vel_x_);
+    vby = clampd(vby, -max_vel_y_, max_vel_y_);
+    if (d_goal < 1.0) {
+      const double scale = clampd(d_goal / 1.0, 0.20, 1.0);
+      vbx *= scale;
+      vby *= scale;
+    }
+    if (heading_err_abs > stop_yaw_error_) {
+      vbx = 0.0;
+      vby = 0.0;
+    } else {
+      vbx *= heading_speed_scale;
+      vby *= heading_speed_scale;
+    }
+    out.linear.x = vbx;
+    out.linear.y = vby;
+    // Keep heading regulation active while translating.
+    out.angular.z = omega_desired;
+  } else if (rotate_in_place_mode_) {
+    // Step 1: rotate in place until robot heading aligns with HRVO velocity direction.
+    out.linear.x = 0.0;
+    out.angular.z = omega_desired;
+  } else if (allow_backward_) {
+    // Diff + lùi: chiếu vận tốc HRVO lên trục base_link (vbx có dấu).
+    double desired_speed = vbx_hrvo;
+    if (slowdown_cos_) {
+      desired_speed *= std::fabs(std::cos(vel_body_angle));
+    }
+    const double v_lim = (desired_speed >= 0.0) ? max_vel_x_ : maxVelXBackwards();
+    desired_speed = clampd(desired_speed, -maxVelXBackwards(), max_vel_x_);
+    if (std::fabs(desired_speed) > std::min(vnorm_hrvo, v_lim)) {
+      desired_speed = std::copysign(std::min(vnorm_hrvo, v_lim), desired_speed);
+    }
+    if (d_goal < 1.0) {
+      const double scale = clampd(d_goal / 1.0, 0.20, 1.0);
+      desired_speed *= scale;
+    }
+    if (axial_align_err > stop_yaw_error_) {
+      desired_speed = 0.0;
+    } else {
+      desired_speed *= heading_speed_scale;
+    }
+    out.linear.x =
+        clampd(desired_speed, -maxVelXBackwards(), max_vel_x_);
+    out.angular.z = omega_desired;
   } else {
-    out = fallbackCmd(robot_pose, target);
+    // Chỉ tiến (legacy).
+    double desired_speed = std::min(vnorm_hrvo, max_vel_x_);
+    if (slowdown_cos_) {
+      const double cos_term = std::max(0.0, std::cos(std::min(heading_err_abs, M_PI_2)));
+      desired_speed *= cos_term;
+    }
+    if (d_goal < 1.0) {
+      const double scale = clampd(d_goal / 1.0, 0.20, 1.0);
+      desired_speed *= scale;
+    }
+    if (heading_err_abs > stop_yaw_error_) {
+      desired_speed = 0.0;
+    } else {
+      desired_speed *= heading_speed_scale;
+    }
+    out.linear.x = clampd(desired_speed, 0.0, max_vel_x_);
+    out.angular.z = omega_desired;
   }
 
   const ros::Time now = ros::Time::now();
@@ -958,17 +1207,47 @@ bool HRVOLocalPlanner::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   last_time_ = now;
 
   const double dv_max = acc_lim_x_ * dt;
+  const double dvy_max = acc_lim_y_ * dt;
   const double dw_max = acc_lim_theta_ * dt;
 
-  out.linear.x = clampd(out.linear.x,
-                        last_cmd_.linear.x - dv_max,
-                        last_cmd_.linear.x + dv_max);
+  if (holonomic_mode_) {
+    out.linear.x = clampd(out.linear.x,
+                          last_cmd_.linear.x - dv_max,
+                          last_cmd_.linear.x + dv_max);
+    out.linear.y = clampd(out.linear.y,
+                          last_cmd_.linear.y - dvy_max,
+                          last_cmd_.linear.y + dvy_max);
+    out.angular.z = clampd(out.angular.z,
+                           last_cmd_.angular.z - dw_max,
+                           last_cmd_.angular.z + dw_max);
+  } else if (rotate_in_place_mode_) {
+    // Rotate phase: allow only angular command.
+    out.linear.x = 0.0;
+    out.linear.y = 0.0;
+    out.angular.z = clampd(out.angular.z,
+                           last_cmd_.angular.z - dw_max,
+                           last_cmd_.angular.z + dw_max);
+  } else {
+    // Translate phase: linear + heading correction (computeControlCommand style).
+    out.linear.x = clampd(out.linear.x,
+                          last_cmd_.linear.x - dv_max,
+                          last_cmd_.linear.x + dv_max);
+    out.linear.y = 0.0;
+    out.angular.z = clampd(out.angular.z,
+                           last_cmd_.angular.z - dw_max,
+                           last_cmd_.angular.z + dw_max);
+  }
 
-  out.angular.z = clampd(out.angular.z,
-                         last_cmd_.angular.z - dw_max,
-                         last_cmd_.angular.z + dw_max);
-
-  out.linear.x = clampd(out.linear.x, 0.0, max_vel_x_);
+  if (holonomic_mode_) {
+    out.linear.x = clampd(out.linear.x, -max_vel_x_, max_vel_x_);
+    out.linear.y = clampd(out.linear.y, -max_vel_y_, max_vel_y_);
+  } else if (allow_backward_) {
+    out.linear.x = clampd(out.linear.x, -maxVelXBackwards(), max_vel_x_);
+    out.linear.y = 0.0;
+  } else {
+    out.linear.x = clampd(out.linear.x, 0.0, max_vel_x_);
+    out.linear.y = 0.0;
+  }
   out.angular.z = clampd(out.angular.z, -max_vel_theta_, max_vel_theta_);
 
   if (!isCmdSafe(robot_pose, out)) {

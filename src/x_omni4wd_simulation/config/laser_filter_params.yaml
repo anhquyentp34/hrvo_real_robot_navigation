@@ -1,0 +1,23 @@
+# Cấu hình laser filter (RPLidar A2M8: 0.2–12 m)
+# Xử lý ghost trail với gpu_ray; chuyển giá trị 0.0 thành giá trị hợp lệ để costmap clearing đúng.
+
+scan_filter_chain:
+  - name: range_filter
+    type: laser_filters/LaserScanRangeFilter
+    params:
+      lower_threshold: 0.15 # rplidar_ros publishes range_min=0.15 (A2M8)
+      upper_threshold: 12.0  # RPLidar A2 max range
+      use_message_range_limits: false
+      lower_threshold_enabled: true
+      upper_threshold_enabled: true
+
+  - name: inf_filter
+    type: laser_filters/LaserScanRangeFilter
+    params:
+      lower_threshold: 0.01
+      upper_threshold: 11.9
+      use_message_range_limits: false
+      lower_threshold_enabled: true
+      upper_threshold_enabled: true
+      remove_infinity: true
+      infinity_replacement: 11.9 

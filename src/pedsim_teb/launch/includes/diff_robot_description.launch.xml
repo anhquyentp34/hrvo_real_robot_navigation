@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Mô hình diff_bot (diff_description): TF base_footprint → ... (joint_state + robot_state).
+       Odom → base_footprint do simulate_diff_drive (pedbot) hoặc static TF cung cấp, không ở file này. -->
+  <arg name="urdf_xacro" default="$(find diff_description)/urdf/diff_bot.urdf.xacro"/>
+  <arg name="gpu" default="false"/>
+  <arg name="velodyne_visualize" default="false"/>
+
+  <param name="robot_description"
+         command="$(find xacro)/xacro $(arg urdf_xacro) gpu:=$(arg gpu) velodyne_visualize:=$(arg velodyne_visualize)"/>
+
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" output="screen">
+    <param name="use_gui" value="false"/>
+  </node>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
+    <param name="publish_frequency" type="double" value="50.0"/>
+  </node>
+</launch>

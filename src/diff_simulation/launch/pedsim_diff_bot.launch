@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!--
+  Pedsim + Gazebo + spawn URDF diff_bot (base:=diff_bot). Thay cho export ROBOT_BASE + robot.launch.
+  roslaunch diff_simulation pedsim_diff_bot.launch
+  Chỉ crowd: with_robot:=false
+-->
+<launch>
+  <arg name="with_robot" default="true"/>
+  <arg name="diff_bot_gpu" default="false"/>
+  <include file="$(find pedsim_simulator)/launch/robot.launch">
+    <arg name="base" value="diff_bot"/>
+    <arg name="with_robot" value="$(arg with_robot)"/>
+    <arg name="diff_bot_gpu" value="$(arg diff_bot_gpu)"/>
+  </include>
+</launch>

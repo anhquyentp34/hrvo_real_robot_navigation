@@ -1,0 +1,58 @@
+# ROS Control configuration for x_omni4wd robot
+# 4-wheel omni-directional robot with X-configuration
+
+x_omni4wd:
+  # Joint State Controller
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50
+
+  # PID Gains for Gazebo ROS Control (required by gazebo_ros_control plugin)
+  gazebo_ros_control:
+    pid_gains:
+      base_link_front_left_wheel_joint:
+        p: 1.0
+        i: 0.0
+        d: 0.0
+        i_clamp_min: -10
+        i_clamp_max: 10
+      base_link_rear_left_wheel_joint:
+        p: 1.0
+        i: 0.0
+        d: 0.0
+        i_clamp_min: -10
+        i_clamp_max: 10
+      base_link_rear_right_wheel_joint:
+        p: 1.0
+        i: 0.0
+        d: 0.0
+        i_clamp_min: -10
+        i_clamp_max: 10
+      base_link_front_right_wheel_joint:
+        p: 1.0
+        i: 0.0
+        d: 0.0
+        i_clamp_min: -10
+        i_clamp_max: 10
+
+  # Wheel Controllers - Thứ tự: (1,2,3,4) = (FL,RL,RR,FR)
+  front_left_wheel_controller:
+    type: effort_controllers/JointVelocityController
+    joint: base_link_front_left_wheel_joint
+    pid: {p: 1.0, i: 0.0, d: 0.0, i_clamp_min: -10, i_clamp_max: 10}
+
+  rear_left_wheel_controller:
+    type: effort_controllers/JointVelocityController
+    joint: base_link_rear_left_wheel_joint
+    pid: {p: 1.0, i: 0.0, d: 0.0, i_clamp_min: -10, i_clamp_max: 10}
+
+  rear_right_wheel_controller:
+    type: effort_controllers/JointVelocityController
+    joint: base_link_rear_right_wheel_joint
+    pid: {p: 1.0, i: 0.0, d: 0.0, i_clamp_min: -10, i_clamp_max: 10}
+
+  front_right_wheel_controller:
+    type: effort_controllers/JointVelocityController
+    joint: base_link_front_right_wheel_joint
+    pid: {p: 1.0, i: 0.0, d: 0.0, i_clamp_min: -10, i_clamp_max: 10}
+

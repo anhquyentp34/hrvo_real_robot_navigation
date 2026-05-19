@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario>
+  <!--
+    Kich ban canh chinh theo waypoint f21_wall_full (VCCA2026).
+    Muc tieu: actor di theo cac diem da hop le tren hanh lang world f21_wall_full,
+    han che spawn ngau nhien ra ngoai vung tuong.
+  -->
+
+  <!-- Waypoints tuyen trai -->
+  <waypoint id="L1" x="-9.524" y="-27.798" r="0.8"/>
+  <waypoint id="L2" x="-5.178799" y="-18.648596" r="0.8"/>
+  <waypoint id="L3" x="-9.485670" y="-8.894632" r="0.8"/>
+  <waypoint id="L4" x="-5.972295" y="-0.147346" r="0.8"/>
+  <waypoint id="L5" x="-8.374928" y="8.345746" r="0.8"/>
+  <waypoint id="L6" x="-4.907872" y="18.468866" r="0.8"/>
+  <waypoint id="L7" x="-4.833240" y="26.506743" r="0.8"/>
+
+  <!-- Waypoints tuyen phai -->
+  <waypoint id="R1" x="1.039958" y="24.423292" r="0.8"/>
+  <waypoint id="R2" x="7.135932" y="26.659145" r="0.8"/>
+  <waypoint id="R3" x="7.099003" y="20.114014" r="0.8"/>
+  <waypoint id="R4" x="9.251710" y="7.963860" r="0.8"/>
+  <waypoint id="R5" x="7.738574" y="-0.524091" r="0.8"/>
+  <waypoint id="R6" x="8.360920" y="-8.624381" r="0.8"/>
+  <waypoint id="R7" x="1.111970" y="-19.757720" r="0.8"/>
+  <waypoint id="R8" x="7.360824" y="-26.974705" r="0.8"/>
+  <waypoint id="R9" x="-4.987433" y="-30.946558" r="0.8"/>
+
+  <!-- Robot reference -->
+  <waypoint id="robot_start" x="-9.730165" y="-28.355275" r="1.0"/>
+  <waypoint id="robot_goal" x="-5.178799" y="-18.648596" r="1.0"/>
+
+  <!-- Khong dung cum spawn rong (dx/dy nho) de tranh actor lot ra ngoai tuong -->
+  <agent x="-9.524" y="-27.798" n="4" dx="0.2" dy="0.2" type="0">
+    <addwaypoint id="L1"/>
+    <addwaypoint id="L2"/>
+    <addwaypoint id="L3"/>
+    <addwaypoint id="L4"/>
+    <addwaypoint id="L5"/>
+    <addwaypoint id="L6"/>
+    <addwaypoint id="L7"/>
+  </agent>
+
+  <agent x="1.039958" y="24.423292" n="4" dx="0.2" dy="0.2" type="1">
+    <addwaypoint id="R1"/>
+    <addwaypoint id="R2"/>
+    <addwaypoint id="R3"/>
+    <addwaypoint id="R4"/>
+    <addwaypoint id="R5"/>
+    <addwaypoint id="R6"/>
+    <addwaypoint id="R7"/>
+    <addwaypoint id="R8"/>
+    <addwaypoint id="R9"/>
+  </agent>
+
+  <!-- Agent dai dien robot trong pedsim -->
+  <agent x="-9.730165" y="-28.355275" n="1" dx="0.0" dy="0.0" type="2">
+    <addwaypoint id="robot_start"/>
+    <addwaypoint id="robot_goal"/>
+  </agent>
+</scenario>

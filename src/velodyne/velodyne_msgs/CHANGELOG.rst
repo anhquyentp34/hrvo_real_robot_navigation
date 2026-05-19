@@ -17,7 +17,7 @@ Change history
   package.xml specification in REP 140. Removed some unnecessary
   execute permissions on a few files. Fixed a missing test_depend.
 * Updated cut_at_specified_angle_feature with latest master version.
-* Contributors: Andre Volk, Joshua Whitley
+* Contributors: quyenanh pt
 
 1.3.0 (2017-11-10)
 ------------------

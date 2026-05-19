@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>diff_simulation</name>
+  <version>1.0.0</version>
+  <description>
+    Ghép mô phỏng end-to-end (mô hình x_omni4wd_simulation): Pedsim + Gazebo + robot diff,
+    và launch phụ map_server/AMCL/move_base cho diff_bot.
+  </description>
+
+  <maintainer email="anhquyentp34@gmail.com">quyenanh pt</maintainer>
+  <license>BSD</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>pedsim_simulator</exec_depend>
+  <exec_depend>pedsim_gazebo_plugin</exec_depend>
+  <exec_depend>diff_description</exec_depend>
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>diff_gazebo</exec_depend>
+  <exec_depend>diff_slam</exec_depend>
+  <exec_depend>diff_navigation</exec_depend>
+  <exec_depend>hrvo_local_planner</exec_depend>
+  <exec_depend>pedsim_msgs</exec_depend>
+  <exec_depend>diff_rviz</exec_depend>
+  <exec_depend>pointcloud_to_scan</exec_depend>
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>joint_state_publisher_gui</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>map_server</exec_depend>
+  <exec_depend>amcl</exec_depend>
+  <exec_depend>move_base</exec_depend>
+  <exec_depend>rviz</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>gazebo_ros_actor_plugin</exec_depend>
+  <export/>
+</package>

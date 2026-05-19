@@ -4,10 +4,12 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Grid1
         - /TF1/Frames1
+        - /Local_plan1
         - /DepthCloud1/Auto Size1
-        - /Marker2
+        - /Marker1
+        - /LidarScanArea1
+        - /LidarScanArea1/Namespaces1
       Splitter Ratio: 0.5
     Tree Height: 373
   - Class: rviz/Selection
@@ -27,7 +29,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: LaserScanRaw
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -73,83 +75,472 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        camera_depth_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_depth_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         camera_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        camera_rgb_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_rgb_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        cpu_link:
+        front_left_wheel_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        head_pan_link:
+        front_right_wheel_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        head_tilt_link:
+        lidar_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        kinect_base_link:
+        rear_left_wheel_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        left_torso_link:
+        rear_right_wheel_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        right_torso_link:
+        roller_wheel_21_10_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        screen_link:
+        roller_wheel_21_11_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        top_torso_link:
+        roller_wheel_21_1_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        torso_link:
+        roller_wheel_21_2_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        upper_base_link:
+        roller_wheel_21_3_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        velodyne:
+        roller_wheel_21_4_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        velodyne_base_link:
+        roller_wheel_21_5_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_21_6_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_21_7_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_21_8_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_21_9_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_22_10_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_22_11_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_22_1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_22_2_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_22_3_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_22_4_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_22_5_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_22_6_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_22_7_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_22_8_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_22_9_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_31_10_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_31_11_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_31_1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_31_2_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_31_3_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_31_4_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_31_5_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_31_6_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_31_7_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_31_8_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_31_9_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_32_10_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_32_11_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_32_1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_32_2_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_32_3_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_32_4_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_32_5_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_32_6_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_32_7_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_32_8_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_32_9_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_41_10_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_41_11_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_41_1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_41_2_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_41_3_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_41_4_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_41_5_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_41_6_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_41_7_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_41_8_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_41_9_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_42_10_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_42_11_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_42_1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_42_2_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_42_3_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_42_4_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_42_5_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_42_6_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_42_7_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_42_8_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_42_9_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_51_10_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_51_11_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_51_1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_51_2_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_51_3_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_51_4_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_51_5_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_51_6_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_51_7_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_51_8_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_51_9_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_52_10_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_52_11_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_52_1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_52_2_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_52_3_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_52_4_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_52_5_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_52_6_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_52_7_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_52_8_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roller_wheel_52_9_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -158,26 +549,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        wheel_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wheel_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wheel_3:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wheel_4:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
@@ -236,6 +607,34 @@ Visualization Manager:
       Size (Pixels): 4
       Size (m): 0.10000000149011612
       Style: Flat Squares
+      Topic: /scan_filtered
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Alpha: 0.3499999940395355
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/LaserScan
+      Color: 32; 74; 135
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: LaserScanRaw
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.07000000029802322
+      Style: Flat Squares
       Topic: /scan
       Unreliable: false
       Use Fixed Frame: true
@@ -286,15 +685,6 @@ Visualization Manager:
       Topic: /move_base/local_costmap/costmap
       Unreliable: false
       Use Timestamp: false
-      Value: true
-    - Alpha: 1
-      Class: rviz/Polygon
-      Color: 25; 255; 0
-      Enabled: true
-      Name: Polygon
-      Queue Size: 10
-      Topic: /move_base/global_costmap/footprint
-      Unreliable: false
       Value: true
     - Alpha: 5
       Buffer Length: 1
@@ -380,14 +770,6 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /move_base/TebLocalPlannerROS/teb_markers
-      Name: Marker
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -400,7 +782,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: Intensity
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -415,7 +797,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Class: rviz/MarkerArray
       Enabled: false
       Marker Topic: /sfm/markers/robot_forces
@@ -426,26 +808,68 @@ Visualization Manager:
       Value: false
     - Class: animated_marker_rviz_plugin/AnimatedMarkerArray
       Enabled: true
-      Marker Topic: /animated_markers
-      Name: AnimatedMarkerArray
+      Marker Topic: /actor_visualization
+      Name: PedestrianAnimatedMesh
       Namespaces:
-        "": true
+        actors: true
       Queue Size: 100
       Value: true
-    - Class: animated_marker_rviz_plugin/AnimatedMarkerArray
+    - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /animated_human_tracks
-      Name: AnimatedMarkerArray
+      Marker Topic: /actor_visualization_text
+      Name: PedestrianNameText
+      Namespaces:
+        actor_names: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: false
+      Marker Topic: /animated_markers
+      Name: AnimatedMarkersFallback
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
+    - Class: rviz/MarkerArray
+      Enabled: false
+      Marker Topic: /animated_human_tracks
+      Name: HumanTracksFallback
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: false
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /waypoint/waypoint_markers
       Name: Marker
       Namespaces:
-        selected_waypoints: true
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /density_visualization
+      Name: LidarScanArea
+      Namespaces:
+        density_text: false
+        lidar_area: true
+      Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Class: rviz/Polygon
+      Color: 255; 215; 0
+      Enabled: true
+      Name: LidarMapPolygon
+      Queue Size: 10
+      Topic: /lidar_map_polygon
+      Unreliable: false
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /hrvo/target_marker
+      Name: Marker
+      Namespaces:
+        hrvo_target: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -476,7 +900,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 22.60993766784668
+      Distance: 35.586063385009766
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1

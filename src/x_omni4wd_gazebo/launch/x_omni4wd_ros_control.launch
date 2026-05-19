@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Launch Gazebo with robot (without joint_state_publisher) -->
+  <arg name="use_sim_time" default="true" />
+  <arg name="gui" default="true" />
+  <arg name="headless" default="false" />
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="debug" value="0" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="use_sim_time" value="$(arg use_sim_time)" />
+    <arg name="headless" value="$(arg headless)" />
+    <arg name="paused" value="false"/>
+  </include>
+
+  <!-- Load robot description -->
+  <param name="robot_description" command="$(find xacro)/xacro $(find x_omni4wd_description)/urdf/x_omni4wd.xacro use_ros_control:=true" />
+
+  <!-- Spawn the robot -->
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model"
+        args="-urdf -model x_omni4wd -param robot_description -x 0 -y 0 -z 0.5" />
+
+  <!-- Load ROS Control configuration -->
+  <!-- Using config from x_omni4wd_control package (has correct controller names) -->
+  <rosparam file="$(find x_omni4wd_control)/config/x_omni4wd_control.yaml" command="load" ns="/x_omni4wd"/>
+
+  <!-- Spawn ROS Control controllers -->
+  <!-- Note: Using *_wheel_velocity_controller names to match xdrive_kinematics_node -->
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+        output="screen" ns="/x_omni4wd"
+        args="joint_state_controller
+              front_left_wheel_velocity_controller
+              rear_left_wheel_velocity_controller
+              rear_right_wheel_velocity_controller
+              front_right_wheel_velocity_controller"/>
+
+  <!-- Robot State Publisher (for TF) -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+        respawn="false" output="screen">
+    <remap from="/joint_states" to="/x_omni4wd/joint_states"/>
+  </node>
+
+  <!-- Python Controller Node -->
+  <!-- DISABLED: Use x_omni4wd_control package with xdrive_kinematics_node (C++) instead -->
+  <!-- This node conflicts with xdrive_kinematics_node if both are running -->
+  <!--
+  <node name="x_omni4wd_controller" pkg="x_omni4wd_gazebo" type="x_omni4wd_controller.py"
+        output="screen" respawn="true">
+    <env name="PYTHONUNBUFFERED" value="1"/>
+  </node>
+  -->
+
+  <!-- X-Drive Kinematics Node (C++) -->
+  <!-- This node subscribes /cmd_vel and publishes wheel velocity commands -->
+  <node name="xdrive_kinematics_node" pkg="x_omni4wd_control" type="xdrive_kinematics_node"
+        output="screen">
+    <param name="robot_ns" value="/x_omni4wd" />
+    <param name="wheel_radius" value="0.05" />
+    <param name="odom_frame" value="odom" />
+    <param name="base_frame" value="base_link" />
+    <param name="publish_tf" value="true" />
+    <param name="cmd_timeout" value="0.2" />
+    
+    <!-- Sign calibration per wheel (default +1, adjust if needed) -->
+    <param name="sign_fl" value="1.0" />
+    <param name="sign_rl" value="1.0" />
+    <param name="sign_rr" value="1.0" />
+    <param name="sign_fr" value="1.0" />
+  </node>
+
+</launch>

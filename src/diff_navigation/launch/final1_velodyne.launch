@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+
+<launch>
+<master auto="start"/>
+<param name="use_sim_time" value="true"/>
+
+  <!-- Arguments -->
+  <arg name="open_rviz" default="true"/>
+  <arg name="move_forward_only" default="false"/>
+  <arg name="map_file" default="$(find diff_slam)/maps/kb_1.yaml"/> <!-- mymap.yaml minh_map-->
+  <arg name="gpu" default="true"/>
+  <arg name="velodyne_cloud_in" default="/velodyne_points_gpu"/>
+
+  <param name="robot_description" command="$(find xacro)/xacro $(find diff_description)/urdf/diff_bot.urdf.xacro gpu:=$(arg gpu)"/>
+
+  <include file="$(find diff_slam)/launch/localization_velodyne.launch">
+    <arg name="velodyne_cloud_in" value="$(arg velodyne_cloud_in)"/>
+  </include>
+  
+  <!-- Log position of robot to draw a trajectory -->
+ <!-- <node name="model_state_logger" pkg="my_robot_logger" type="robot_state_logger.py" output="screen"/> -->
+
+  <!-- Move_base -->
+  <include file="$(find diff_navigation)/launch/move_base_hrvo.launch"/>
+  
+  <!-- Launch the simple path publisher for 4 doctors -->
+  <node name="simple_path_publisher" pkg="gazebo_ros_actor_plugin" type="multi_actor_path_publisher.py" output="screen">
+  </node> 
+  <!-- Launch hien marker nguoi -->
+  <node name="sfm_local_plan_republisher" pkg="diff_navigation" type="sfm_local_plan_republisher.py" output="screen">
+  </node>
+    <!-- costmap group_actor-human -->
+  <node name="social_cue_sim_original" pkg="social_cue_sim" type="social_cue_sim_original.py" output="screen">
+  </node> 
+  
+  <!-- Launch tracking actor (minh) 
+  <node name="human_tracking" pkg="diff_navigation" type="human_tracking.py" output="screen"> 
+  </node> -->
+  
+  
+  
+ <!--  **************** Visualisation ****************  -->
+ <group if="$(arg open_rviz)"> 
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find diff_rviz)/rviz/final.rviz"/>
+ </group>
+ <!-- ✅ Relay scan -> scan_filtered để đảm bảo SFM nhận được  chạy teb thì tắt-->
+  <node name="relay_scan_filtered" pkg="topic_tools" type="relay" args="/scan /scan_filtered" />
+</launch>

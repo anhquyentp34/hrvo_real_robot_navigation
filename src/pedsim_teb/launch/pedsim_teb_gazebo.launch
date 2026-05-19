@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!--
+    PedSim + Gazebo (pedsim_gazebo_plugin) + diff_bot trong Gazebo + TEB/move_base.
+    Luồng tham chiếu: pedsim_simulator/robot.launch, pedsim_gazebo_plugin/launch/social_contexts.launch.
+
+    Odom/cmd_vel: plugin libgazebo_ros_diff_drive trong URDF — không dùng pedbot / odom_from_tf.
+  -->
+  <arg name="use_sim_time" default="true"/>
+  <param name="use_sim_time" value="$(arg use_sim_time)"/>
+
+  <!-- Mặc định: world tối thiểu (ổn định, tránh gzserver 139 với SDF tường nặng). Tường: spawn_social_walls hoặc world:=.../pedsim_social_walls_actor.world -->
+  <arg name="world" default="$(find pedsim_teb)/worlds/pedsim_minimal_actor.world"/>
+  <arg name="spawn_social_walls" default="true" doc="true: gọi script spawn 4 tường (không cần world có tường sẵn)"/>
+  <arg name="social_walls_spawn_delay" default="3.0" doc="Giây chờ sau khi Gazebo sẵn sàng rồi mới spawn tường"/>
+  <arg name="scene_file" default="$(find pedsim_simulator)/scenarios/social_contexts.xml"/>
+  <arg name="pose_initial_x" default="5.0"/>
+  <arg name="pose_initial_y" default="5.0"/>
+  <arg name="pose_initial_theta" default="0.0"/>
+  <arg name="gazebo_robot_model_name" default="mobile_base"/>
+  <arg name="gazebo_robot_z" default="0.1"/>
+  <arg name="urdf_xacro" default="$(find diff_description)/urdf/diff_bot.urdf.xacro"/>
+  <arg name="diff_bot_gpu" default="false"/>
+  <arg name="velodyne_visualize" default="true" doc="false: tắt tia lidar trong Gazebo (nhẹ GPU nếu máy yếu)"/>
+  <arg name="rviz" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="pedsim_simulation_factor" default="3.0"/>
+  <arg name="pedsim_update_rate" default="25.0"/>
+  <arg name="enable_actor_animated_markers" default="false" doc="true: include actor_animated_markers.launch"/>
+  <!-- actor_model_simple.sdf: hộp nhẹ, ổn định đám đông. actor_model.sdf: mesh người, dễ gzserver 139 khi nhiều agent -->
+  <arg name="gazebo_actor_sdf" default="$(find pedsim_gazebo_plugin)/models/actor_model_simple.sdf"/>
+  <arg name="gazebo_spawn_actor_delay_sec" default="0.06"/>
+  <!-- Khớp robot.launch: dịch gốc gazebo so với odom -->
+  <arg name="odom_gazebo_x" default="-1.0"/>
+  <arg name="odom_gazebo_y" default="-1.0"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+  </include>
+
+  <node if="$(eval arg('spawn_social_walls') == 'true')" pkg="pedsim_teb" type="spawn_social_context_walls.py"
+        name="spawn_social_context_walls" output="screen">
+    <param name="wait_after_gazebo_ready" value="$(arg social_walls_spawn_delay)"/>
+  </node>
+
+  <node pkg="tf" type="static_transform_publisher" name="odom_to_gazebo"
+        args="$(arg odom_gazebo_x) $(arg odom_gazebo_y) 0 0 0 0 odom gazebo 100"/>
+
+  <!-- Phải chạy trước spawn_pedsim_agents để có topic /pedsim_simulator/simulated_agents -->
+  <node name="pedsim_simulator" pkg="pedsim_simulator" type="pedsim_simulator" output="screen">
+    <param name="scene_file" value="$(arg scene_file)" type="string"/>
+    <param name="default_queue_size" value="10" type="int"/>
+    <param name="max_robot_speed" value="1.5" type="double"/>
+    <param name="robot_mode" value="1" type="int"/>
+    <param name="enable_groups" value="true" type="bool"/>
+    <param name="simulation_factor" value="$(arg pedsim_simulation_factor)" type="double"/>
+    <param name="update_rate" value="$(arg pedsim_update_rate)" type="double"/>
+    <param name="frame_id" value="gazebo"/>
+    <param name="gazebo_robot_model_name" value="$(arg gazebo_robot_model_name)" type="string"/>
+  </node>
+
+  <include file="$(find pedsim_visualizer)/launch/visualizer.launch"/>
+
+  <node pkg="pedsim_gazebo_plugin" type="spawn_pedsim_agents.py" name="spawn_pedsim_agents" output="screen">
+    <param name="actor_model_file" value="$(arg gazebo_actor_sdf)"/>
+    <param name="spawn_delay_sec" value="$(arg gazebo_spawn_actor_delay_sec)"/>
+  </node>
+
+  <include file="$(find pedsim_teb)/launch/includes/gazebo_diff_bot.launch.xml">
+    <arg name="urdf_xacro" value="$(arg urdf_xacro)"/>
+    <arg name="gpu" value="$(arg diff_bot_gpu)"/>
+    <arg name="velodyne_visualize" value="$(arg velodyne_visualize)"/>
+    <arg name="pose_initial_x" value="$(arg pose_initial_x)"/>
+    <arg name="pose_initial_y" value="$(arg pose_initial_y)"/>
+    <arg name="pose_initial_theta" value="$(arg pose_initial_theta)"/>
+    <arg name="z" value="$(arg gazebo_robot_z)"/>
+    <arg name="gazebo_model_name" value="$(arg gazebo_robot_model_name)"/>
+  </include>
+
+  <!-- LaserScan 2D cho RViz (display /scan) — Velodyne là PointCloud /velodyne_points -->
+  <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="velodyne_points_to_scan" output="screen">
+    <remap from="cloud_in" to="/velodyne_points"/>
+    <remap from="scan" to="/scan"/>
+    <param name="target_frame" value="base_footprint"/>
+    <param name="transform_tolerance" value="0.2"/>
+    <param name="min_height" value="-0.6"/>
+    <param name="max_height" value="2.0"/>
+    <param name="angle_min" value="-3.14159"/>
+    <param name="angle_max" value="3.14159"/>
+    <param name="scan_time" value="0.05"/>
+    <param name="range_min" value="0.9"/>
+    <param name="range_max" value="80.0"/>
+    <param name="use_inf" value="true"/>
+  </node>
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+    <param name="publish_frequency" type="double" value="50.0"/>
+  </node>
+
+  <include if="$(eval arg('enable_actor_animated_markers') == 'true')"
+           file="$(find pedsim_gazebo_plugin)/launch/actor_animated_markers.launch"/>
+
+  <!-- Khởi động muộn để Gazebo/TF sẵn sàng (RViz không phụ thuộc gzserver nhưng tránh flash lỗi TF); QT_X11_NO_MITSHM giảm lỗi MIT-SHM -->
+  <node if="$(eval arg('rviz') == 'true')" pkg="rviz" type="rviz" name="rviz_pedsim_teb" output="screen"
+        respawn="true" respawn_delay="2"
+        args="-d $(find pedsim_teb)/config/rviz/pedsim_teb.rviz">
+    <env name="QT_X11_NO_MITSHM" value="1"/>
+  </node>
+
+  <include file="$(find pedsim_sensors)/launch/obstacle_pcd_sensor.launch">
+    <arg name="origin_x" value="$(arg pose_initial_x)"/>
+    <arg name="origin_y" value="$(arg pose_initial_y)"/>
+    <arg name="range" value="15.0"/>
+  </include>
+  <include file="$(find pedsim_sensors)/launch/people_pcd_sensor.launch">
+    <arg name="origin_x" value="0.0"/>
+    <arg name="origin_y" value="0.0"/>
+  </include>
+
+  <include file="$(find pedsim_teb)/launch/includes/move_base.launch.xml">
+    <arg name="cmd_vel_topic" value="/cmd_vel"/>
+  </include>
+</launch>

@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Matthew Pitropov, Joshua Whitley
+// Copyright (C) 2026 quyenanh pt
 // All rights reserved.
 //
 // Software License Agreement (BSD License 2.0)

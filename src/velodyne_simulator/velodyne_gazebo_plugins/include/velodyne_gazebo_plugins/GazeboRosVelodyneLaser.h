@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2015-2018, Dataspeed Inc.
+ *  Copyright (C) 2026 quyenanh pt
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without

@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+
+<launch>
+
+     <arg name="odom_topic" default="/odom"/> 
+     <arg name="cmd_vel_topic" default="/cmd_vel"/>
+     <arg name="global_frame" default="map"/> 
+     <arg name="odom_frame" default="odom"/> 
+    <arg name="base_frame" default="base_footprint"/>
+    <arg name="laser_frame" default="laser"/>     
+    <arg name="scan_topic" default= "/scan"/> 
+    <arg name="move_forward_only" default="false"/>
+    <arg name="use_tracked_people" default="false"/>
+    <arg name="tracked_people_topic" default="/people"/>
+    <arg name="use_gazebo_agents" default="true"/>
+    <arg name="publish_hrvo_input_msg" default="true"/>
+    <arg name="hrvo_input_topic" default="/hrvo/input"/>
+    <arg name="use_hrvo_input_robot_state" default="true"/>
+    <arg name="agent_fusion_policy" default="merge"/>
+    <arg name="agent_duplicate_radius" default="0.35"/>
+    <arg name="use_static_obstacles" default="true"/>
+    <!-- global_costmap có StaticLayer (map tường); local chỉ có laser → dùng global cho HRVO static -->
+    <arg name="static_obstacle_map_topic" default="/move_base/global_costmap/costmap"/>
+    <arg name="static_cost_threshold" default="90"/>
+    <arg name="static_sample_step" default="2"/>
+    <arg name="static_obstacle_radius" default="0.32"/>
+    <arg name="static_max_agents" default="250"/>
+    <!-- Bật khi planner có thể phát linear.y (holonomic) nhưng robot là diff-drive -->
+    <arg name="use_diff_drive_cmd_adapter" default="false"/>
+    <arg name="cmd_vel_hrvo_topic" default="cmd_vel_hrvo"/>
+    <arg name="project_hrvo_to_forward" default="false"/>
+    <arg name="adapter_input_in_body_frame" default="true"/>
+    <arg name="adapter_use_odom" default="true"/>
+    <arg name="hrvo_config"
+         default="$(find hrvo_local_planner)/cfg/hrvo_local_planner.yaml"
+         doc="YAML HRVOLocalPlanner; dùng hrvo_local_planner_diff_fast.yaml cho phản ứng nhanh"/>
+
+    <!-- Load trước fusion để hrvo_input_fusion_node đọc cùng lookahead_dist với HRVOLocalPlanner -->
+    <rosparam file="$(arg hrvo_config)" command="load" ns="move_base"/>
+
+    <include if="$(arg publish_hrvo_input_msg)" file="$(find hrvo_local_planner)/launch/hrvo_input_fusion.launch">
+      <arg name="pedsim_topic" value="/pedsim_simulator/simulated_agents"/>
+      <arg name="odom_topic" value="$(arg odom_topic)"/>
+      <arg name="output_topic" value="$(arg hrvo_input_topic)"/>
+      <arg name="output_frame" value="$(arg global_frame)"/>
+      <arg name="use_static_obstacles" value="$(arg use_static_obstacles)"/>
+      <arg name="static_obstacle_map_topic" value="$(arg static_obstacle_map_topic)"/>
+      <arg name="static_cost_threshold" value="$(arg static_cost_threshold)"/>
+      <arg name="static_sample_step" value="$(arg static_sample_step)"/>
+      <arg name="static_obstacle_radius" value="$(arg static_obstacle_radius)"/>
+      <arg name="static_max_agents" value="$(arg static_max_agents)"/>
+    </include>
+
+    <!--  ************** Navigation với SFM Local Planner *************** -->
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    
+        <rosparam file="$(find diff_navigation)/config/move_base_params.yaml" command="load" />     
+        <rosparam file="$(find diff_navigation)/config/costmap_common_params_velodyne.yaml" command="load" ns="global_costmap"/>
+        <rosparam file="$(find diff_navigation)/config/costmap_common_params_velodyne.yaml" command="load" ns="local_costmap"/>
+        <rosparam file="$(find diff_navigation)/config/local_costmap_params.yaml" command="load" />
+        <rosparam file="$(find diff_navigation)/config/global_costmap_params_map.yaml" command="load" />
+    
+       <!--  <rosparam file="$(find diff_navigation)/config/teb_local_planner_params.yaml" command="load" />
+        <rosparam file="$(find diff_navigation)/config/move_base_params.yaml" command="load" />  -->
+        
+        <!-- SFM Local Planner Parameters -->
+        <rosparam file="$(arg hrvo_config)" command="load" /> 
+        <param name="HRVOLocalPlanner/use_tracked_people" value="$(arg use_tracked_people)"/>
+        <param name="HRVOLocalPlanner/tracked_people_topic" value="$(arg tracked_people_topic)"/>
+        <param name="HRVOLocalPlanner/use_gazebo_agents" value="$(arg use_gazebo_agents)"/>
+        <param name="HRVOLocalPlanner/use_hrvo_input_topic" value="$(arg publish_hrvo_input_msg)"/>
+        <param name="HRVOLocalPlanner/hrvo_input_topic" value="$(arg hrvo_input_topic)"/>
+        <param name="HRVOLocalPlanner/use_hrvo_input_robot_state" value="$(arg use_hrvo_input_robot_state)"/>
+        <param name="HRVOLocalPlanner/agent_fusion_policy" value="$(arg agent_fusion_policy)"/>
+        <param name="HRVOLocalPlanner/agent_duplicate_radius" value="$(arg agent_duplicate_radius)"/>
+
+        <!-- Global Planner  của teb:  <param name="base_global_planner"   value="navfn/NavfnROS"/>-->
+        <param name="base_global_planner" value="global_planner/GlobalPlanner" /> 
+        <param name="planner_frequency" value="5.0" />
+        <param name="planner_patience" value="5.0" />
+
+        <!-- SFM Local Planner -->
+       <!--  <param name="base_local_planner" value="sfm_local_controller/SFMControllerROS"/> -->
+        <param name="base_local_planner" value="hrvo_local_planner/HRVOLocalPlanner"/>
+
+        <param name="controller_frequency" value="20.0" />
+        <param name="controller_patience" value="15.0" />
+
+	 <!-- ************** remap *************** -->
+       <remap from="scan"              to="$(arg scan_topic)"/>  <!-- remap rõ ràng -->
+       <remap from="odom"              to="$(arg odom_topic)"/>
+        <remap from="cmd_vel" to="$(arg cmd_vel_hrvo_topic)" if="$(arg use_diff_drive_cmd_adapter)"/>
+       <remap from="cmd_vel" to="$(arg cmd_vel_topic)" unless="$(arg use_diff_drive_cmd_adapter)"/>
+       <remap from="dynamic_obstacles" to="/dynamic_obstacles"/>
+    </node>
+
+    <include if="$(arg use_diff_drive_cmd_adapter)"
+             file="$(find hrvo_local_planner)/launch/includes/diff_drive_cmd_adapter.launch.xml">
+      <arg name="cmd_vel_in" value="$(arg cmd_vel_hrvo_topic)"/>
+      <arg name="cmd_vel_out" value="$(arg cmd_vel_topic)"/>
+      <arg name="project_to_forward" value="$(arg project_hrvo_to_forward)"/>
+      <arg name="input_in_body_frame" value="$(arg adapter_input_in_body_frame)"/>
+      <arg name="use_odom_topic" value="$(arg adapter_use_odom)"/>
+      <arg name="odom_topic" value="$(arg odom_topic)"/>
+    </include>
+     
+</launch>

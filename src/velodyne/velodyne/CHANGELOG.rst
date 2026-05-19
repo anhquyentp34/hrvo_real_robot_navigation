@@ -17,14 +17,14 @@ Change history
   All package.xml files are now compatible with version 2 of the
   package.xml specification in REP 140. Removed some unnecessary
   execute permissions on a few files. Fixed a missing test_depend.
-* Contributors: Andre Volk, Joshua Whitley
+* Contributors: quyenanh pt
 
 1.3.0 (2017-11-10)
 ------------------
 * Merge pull request `#110 <https://github.com/ros-drivers/velodyne/issues/110>`_ from kmhallen/master
   Added velodyne_laserscan package
 * Added velodyne_laserscan package and inserted into existing launch files
-* Contributors: Jack O'Quin, Joshua Whitley, Kevin Hallenbeck
+* Contributors: quyenanh pt
 
 1.2.0 (2014-08-06)
 ------------------

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario>
+  <!-- Boundary + inner wall from singleagent.world -->
+  <obstacle x1="-10.0" y1="-7.5" x2="10.0" y2="-7.5"/>
+  <obstacle x1="-10.0" y1="-7.5" x2="-10.0" y2="7.5"/>
+  <obstacle x1="-10.0" y1="7.5" x2="10.0" y2="7.5"/>
+  <obstacle x1="10.0" y1="-7.5" x2="10.0" y2="7.5"/>
+  <obstacle x1="-2.0" y1="-7.5" x2="-2.0" y2="-2.5"/>
+
+  <!-- Waypoints (all inside wall bounds) -->
+  <waypoint id="LT" x="-8.0" y="6.0" r="0.9"/>
+  <waypoint id="LM" x="-7.5" y="0.0" r="0.9"/>
+  <waypoint id="LB" x="-8.0" y="-6.0" r="0.9"/>
+  <waypoint id="RT" x="8.0" y="6.0" r="0.9"/>
+  <waypoint id="RM" x="7.5" y="0.0" r="0.9"/>
+  <waypoint id="RB" x="8.0" y="-6.0" r="0.9"/>
+  <waypoint id="C0" x="0.0" y="0.0" r="0.9"/>
+  <waypoint id="C1" x="1.5" y="2.0" r="0.9"/>
+  <waypoint id="C2" x="-1.0" y="2.8" r="0.9"/>
+  <waypoint id="C3" x="1.0" y="-2.0" r="0.9"/>
+  <waypoint id="C4" x="-0.8" y="-1.8" r="0.9"/>
+  <waypoint id="GAP" x="-1.0" y="-2.1" r="0.7"/>
+
+  <!-- 15 pedestrians total, mixed paths for chaotic flow -->
+  <agent x="-8.2" y="5.8" n="3" dx="1.0" dy="0.8" type="0">
+    <addwaypoint id="LM"/>
+    <addwaypoint id="C2"/>
+    <addwaypoint id="C0"/>
+    <addwaypoint id="RT"/>
+    <addwaypoint id="RM"/>
+  </agent>
+
+  <agent x="-8.2" y="-5.8" n="3" dx="1.0" dy="0.8" type="1">
+    <addwaypoint id="LM"/>
+    <addwaypoint id="GAP"/>
+    <addwaypoint id="C3"/>
+    <addwaypoint id="RB"/>
+    <addwaypoint id="RM"/>
+  </agent>
+
+  <agent x="7.8" y="5.8" n="3" dx="1.0" dy="0.8" type="2">
+    <addwaypoint id="RM"/>
+    <addwaypoint id="C1"/>
+    <addwaypoint id="C0"/>
+    <addwaypoint id="LT"/>
+    <addwaypoint id="LM"/>
+  </agent>
+
+  <agent x="7.8" y="-5.8" n="3" dx="1.0" dy="0.8" type="3">
+    <addwaypoint id="RM"/>
+    <addwaypoint id="C4"/>
+    <addwaypoint id="GAP"/>
+    <addwaypoint id="LB"/>
+    <addwaypoint id="LM"/>
+  </agent>
+
+  <agent x="0.0" y="0.0" n="3" dx="1.2" dy="1.0" type="0">
+    <addwaypoint id="C1"/>
+    <addwaypoint id="C3"/>
+    <addwaypoint id="C2"/>
+    <addwaypoint id="C4"/>
+    <addwaypoint id="RM"/>
+    <addwaypoint id="LM"/>
+  </agent>
+</scenario>

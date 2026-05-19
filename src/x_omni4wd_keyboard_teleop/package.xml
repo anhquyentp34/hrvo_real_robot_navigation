@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>x_omni4wd_keyboard_teleop</name>
+  <version>0.1.0</version>
+  <description>Điều khiển bàn phím toàn cục (pynput) cho robot omni x_omni4wd: cmd_vel đầy đủ vx,vy,wz (REP-103) với làm mượt theo gia tốc.</description>
+
+  <maintainer email="anhquyentp34@gmail.com">quyenanh pt</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+</package>

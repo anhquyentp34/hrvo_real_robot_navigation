@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario>
+  <!-- Obstacles mapped from singleagent.world -->
+  <obstacle x1="-10.0" y1="-7.5" x2="10.0" y2="-7.5"/>
+  <obstacle x1="-10.0" y1="-7.5" x2="-10.0" y2="7.5"/>
+  <obstacle x1="-10.0" y1="7.5" x2="10.0" y2="7.5"/>
+  <obstacle x1="10.0" y1="-7.5" x2="10.0" y2="7.5"/>
+  <obstacle x1="-2.0" y1="-7.5" x2="-2.0" y2="-2.5"/>
+
+  <!-- Waypoints fully inside walls -->
+  <waypoint id="w_left_top" x="-7.0" y="5.5" r="1.0"/>
+  <waypoint id="w_left_mid" x="-7.0" y="0.0" r="1.0"/>
+  <waypoint id="w_left_bot" x="-7.0" y="-5.5" r="1.0"/>
+  <waypoint id="w_right_top" x="7.0" y="5.5" r="1.0"/>
+  <waypoint id="w_right_mid" x="7.0" y="0.0" r="1.0"/>
+  <waypoint id="w_right_bot" x="7.0" y="-5.5" r="1.0"/>
+  <waypoint id="w_center" x="0.0" y="0.0" r="1.0"/>
+  <waypoint id="w_gap" x="-1.0" y="-1.8" r="1.0"/>
+
+  <!-- 10 pedestrians total -->
+  <agent x="-7.5" y="4.5" n="2" dx="0.8" dy="0.8" type="0">
+    <addwaypoint id="w_left_mid"/>
+    <addwaypoint id="w_center"/>
+    <addwaypoint id="w_right_top"/>
+    <addwaypoint id="w_right_mid"/>
+  </agent>
+
+  <agent x="-7.5" y="-4.5" n="2" dx="0.8" dy="0.8" type="1">
+    <addwaypoint id="w_left_mid"/>
+    <addwaypoint id="w_gap"/>
+    <addwaypoint id="w_right_bot"/>
+    <addwaypoint id="w_right_mid"/>
+  </agent>
+
+  <agent x="6.5" y="4.5" n="2" dx="0.8" dy="0.8" type="2">
+    <addwaypoint id="w_right_mid"/>
+    <addwaypoint id="w_center"/>
+    <addwaypoint id="w_left_top"/>
+    <addwaypoint id="w_left_mid"/>
+  </agent>
+
+  <agent x="6.5" y="-4.5" n="2" dx="0.8" dy="0.8" type="3">
+    <addwaypoint id="w_right_mid"/>
+    <addwaypoint id="w_gap"/>
+    <addwaypoint id="w_left_bot"/>
+    <addwaypoint id="w_left_mid"/>
+  </agent>
+
+  <agent x="-0.5" y="0.0" n="2" dx="0.6" dy="0.6" type="0">
+    <addwaypoint id="w_center"/>
+    <addwaypoint id="w_right_mid"/>
+    <addwaypoint id="w_left_mid"/>
+  </agent>
+</scenario>

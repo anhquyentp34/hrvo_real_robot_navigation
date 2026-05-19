@@ -6,7 +6,7 @@ Change history
 * Merge pull request `#205 <https://github.com/ros-drivers/velodyne/issues/205>`_ from xiesc/master
   support for 64E-S3
 * add an example yaml file for S3
-* Contributors: Joshua Whitley, Shichao XIE, xiesc
+* Contributors: quyenanh pt
 
 1.5.1 (2018-12-10)
 ------------------
@@ -15,7 +15,7 @@ Change history
 * std::vector<>::reserve is your friend
 * add static to avoid frequence memory allocation
 * avoid unecesary calculations in unpack()
-* Contributors: Davide Faconti, Joshua Whitley
+* Contributors: quyenanh pt
 
 1.5.0 (2018-10-19)
 ------------------
@@ -34,7 +34,7 @@ Change history
 * Adding VLP-32C support.
   Based on work done by @rockcdr. Adds distance_resolution calibration
   value to support 0.004m distance resolution for VLP-32C.
-* Contributors: Joshua Whitley, Konstantin Veretennicov
+* Contributors: quyenanh pt
 
 1.4.0 (2018-09-19)
 ------------------
@@ -62,7 +62,7 @@ Change history
 * Updated default cut_angle parameters in launch files after switching from deg to rad.
 * Use std::abs instead of abs
   abs is the c version which returns an integer. This is probably not intended here, so use the templated std::abs function.
-* Contributors: Andre Volk, Autonomoustuff Developer, CNR, Joshua Whitley, Kyle Rector, Stephan Sundermann, Tobias Athmer, kennouni
+* Contributors: quyenanh pt
 
 1.3.0 (2017-11-10)
 -------------------
@@ -188,7 +188,7 @@ Change history
   fixed gen_calibration min/max intensity type
 * fixed gen_calibration min/max intensity type
 * fixed a calibration file parsing bug
-* Contributors: Adam Stambler, Alex Rodrigues, Alexander Schaefer, Andreas Wachaja, Bo Li, Daniel Jartoux, Gabor Meszaros, Jack OQuin, Jose Luis Blanco-Claraco, Joshua Whitley, Kevin Hallenbeck, Kris Kozak, Kun Li, Micho Radovnikovich, Scott K Logan, Thomas Solatges, Todor Stoyanov, William Woodall, jack.oquin, libo24, phussey, piyushk, pomerlef
+* Contributors: quyenanh pt
 
 1.2.0 (2014-08-06)
 ------------------
@@ -203,7 +203,7 @@ Change history
 * Add dynamic_reconfigure feature.
 * Add angular limits to the output point cloud, useful for omitting
   part of it. (`#22 <https://github.com/ros-drivers/velodyne/pull/22>`_).
-* Contributors: Jack OQuin, Scott K Logan, Thomas Solatges
+* Contributors: quyenanh pt
 
 1.1.2 (2013-11-05)
 ------------------
@@ -218,7 +218,7 @@ Change history
  * Add support for HDL-64E S2 and S2.1 models, which were not working
    before (`#11`_), thanks to Gabor Meszaros (`#12`_).
  * Add additional parameters to launch files (`#14`_).
- * Contributors: Gabor Meszaros, Jack OQuin
+ * Contributors: quyenanh pt
 
 1.1.0 (2013-07-16)
 ------------------

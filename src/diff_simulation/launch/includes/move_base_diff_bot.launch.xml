@@ -1,0 +1,39 @@
+<!--
+  move_base cho robot diff trong mo phong:
+  - khong dung Kobuki nodelet/cmd_vel_mux
+  - mac dinh /odom, /scan, /cmd_vel
+-->
+<launch>
+  <arg name="odom_frame_id"   default="odom"/>
+  <arg name="base_frame_id"   default="base_footprint"/>
+  <arg name="global_frame_id" default="map"/>
+  <arg name="odom_topic" default="odom"/>
+  <arg name="laser_topic" default="scan"/>
+  <arg name="cmd_vel_out" default="cmd_vel"/>
+  <arg name="custom_param_file" default="$(find diff_simulation)/param/dummy.yaml"/>
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find diff_simulation)/param/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+    <rosparam file="$(find diff_simulation)/param/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+    <rosparam file="$(find diff_simulation)/param/local_costmap_params.yaml" command="load"/>
+    <rosparam file="$(find diff_simulation)/param/global_costmap_params.yaml" command="load"/>
+    <rosparam file="$(find diff_simulation)/param/dwa_local_planner_params.yaml" command="load"/>
+    <rosparam file="$(find diff_simulation)/param/move_base_params.yaml" command="load"/>
+    <rosparam file="$(find diff_simulation)/param/global_planner_params.yaml" command="load"/>
+    <rosparam file="$(find diff_simulation)/param/navfn_global_planner_params.yaml" command="load"/>
+    <rosparam file="$(arg custom_param_file)" command="load"/>
+
+    <param name="global_costmap/global_frame" value="$(arg global_frame_id)"/>
+    <param name="global_costmap/robot_base_frame" value="$(arg base_frame_id)"/>
+    <param name="local_costmap/global_frame" value="$(arg odom_frame_id)"/>
+    <param name="local_costmap/robot_base_frame" value="$(arg base_frame_id)"/>
+    <param name="DWAPlannerROS/global_frame_id" value="$(arg odom_frame_id)"/>
+
+    <param name="global_costmap/obstacle_layer/observation_sources" value="scan"/>
+    <param name="local_costmap/obstacle_layer/observation_sources" value="scan"/>
+
+    <remap from="odom" to="$(arg odom_topic)"/>
+    <remap from="scan" to="$(arg laser_topic)"/>
+    <remap from="cmd_vel" to="$(arg cmd_vel_out)"/>
+  </node>
+</launch>

@@ -1,9 +1,15 @@
-# FILE: hrvo_local_planner/config/hrvo_local_planner.yaml
+# HRVOLocalPlanner — cấu hình cho robot hai bánh vi sai (diff).
+# move_base thường load: <rosparam file="$(find hrvo_local_planner)/cfg/hrvo_local_planner.yaml" command="load" ns="move_base/HRVOLocalPlanner"/>
 HRVOLocalPlanner:
-HRVOLocalPlanner:
+  # --- Kiểu điều khiển ---
+  holonomic_mode: false
+  allow_backward: true
   max_vel_x: 0.8
-  max_vel_theta: 0.9
-  acc_lim_x: 0.5
+  max_vel_x_backwards: 0.6   # <0 = dùng max_vel_x
+  max_vel_y: 0.0
+  max_vel_theta: 1.2
+  acc_lim_x: 0.9
+  acc_lim_y: 0.5
   acc_lim_theta: 1.2
 
   xy_goal_tolerance: 0.20
@@ -14,30 +20,61 @@ HRVOLocalPlanner:
   min_vnorm_dir: 0.02
 
   neighbor_dist: 10.0
-  max_neighbors: 20
+  max_neighbors: 30
+  max_other_agents_for_hrvo: 80
+  static_agent_speed_thresh: 0.05
   robot_radius: 0.28
   goal_radius: 0.20
-  pref_speed: 0.45
-  max_speed: 0.65
-  uncertainty_offset: 0.20
-  max_accel: 0.8
+  # HRVO_ws (pedsim) dùng pref/max ~1.5 m/s; 0.55 quá thấp cho “phản ứng nhanh”
+  pref_speed: 0.75
+  max_speed: 0.95
+  uncertainty_offset: 0.18
+  max_accel: 1.0
   time_step: 0.10
 
-  heading_kp: 2.2
+  heading_kp: 2.8
+  heading_brake_angle: 1.10
+  min_speed_turning_scale: 0.20
   slowdown_cos: true
-  stop_yaw_error: 0.9
+  stop_yaw_error: 0.30
+  rotate_enter_error: 0.35
+  rotate_exit_error: 0.18
 
-  use_gazebo_agents: true
+  # --- Tập hợp dữ liệu agent động cho HRVO ---
+  # Topic thống nhất (ví dụ từ hrvo_input_fusion_node): pedsim + costmap tĩnh + target.
+  use_hrvo_input_topic: true
+  hrvo_input_topic: /hrvo/input
+  hrvo_input_timeout: 0.5
+  # true: pose robot từ HRVOInput (đồng bộ với fusion); false: dùng TF qua costmap_ros->getRobotPose.
+  use_hrvo_input_robot_state: true
+
+  # merge: agents từ HRVOInput trước, sau đó thêm Gazebo / people nếu không trùng vị trí.
+  # hrvo_input_only: chỉ dùng mảng agents trên topic (fusion node phải gom hết nguồn).
+  agent_fusion_policy: merge
+  agent_duplicate_radius: 0.35
+
+  use_gazebo_agents: false
+  gazebo_model_states_topic: /gazebo/model_states
   include_humans: true
   gazebo_frame: world
   human_prefix: actor
   human_radius: 0.38
+  robot_model_name: ""
+  other_model_prefix: ""
+
+  use_tracked_people: false
+  tracked_people_topic: /people
+  tracked_people_timeout: 0.6
+  tracked_person_radius: 0.42
+  people_velocity_alpha: 0.6
+  min_people_speed_for_hrvo: 0.05
 
   allow_world_as_global_when_tf_fails: true
   model_states_timeout: 0.3
 
+  # Rollout an toàn costmap: diff dùng mô hình unicycle (vx tiến + omega).
   use_costmap_safety: true
-  obstacle_cost_threshold: 253
-  safety_rollout_time: 0.8
+  obstacle_cost_threshold: 254
+  safety_rollout_time: 0.4
   safety_dt: 0.08
-  safety_radius_padding: 0.04
+  safety_radius_padding: 0.0

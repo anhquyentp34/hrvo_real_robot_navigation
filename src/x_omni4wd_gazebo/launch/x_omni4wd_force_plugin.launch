@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Force-based Gazebo plugin mode: sub /cmd_vel, pub /odom,/tf,/joint_states -->
+  <arg name="use_sim_time" default="true" />
+  <arg name="gui" default="true" />
+  <arg name="headless" default="false" />
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="debug" value="0" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="use_sim_time" value="$(arg use_sim_time)" />
+    <arg name="headless" value="$(arg headless)" />
+    <arg name="paused" value="false"/>
+  </include>
+
+  <!-- Load robot description with force-based plugin enabled -->
+  <param name="robot_description"
+         command="$(find xacro)/xacro --inorder $(find x_omni4wd_description)/urdf/x_omni4wd.xacro use_ros_control:=false" />
+
+  <!-- Spawn the robot -->
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model"
+        args="-urdf -model x_omni4wd -param robot_description -x 0 -y 0 -z 0.5"
+        output="screen" />
+
+  <!-- Robot State Publisher (for TF tree from URDF). The plugin provides /joint_states -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+        respawn="false" output="screen" />
+</launch>
+
+

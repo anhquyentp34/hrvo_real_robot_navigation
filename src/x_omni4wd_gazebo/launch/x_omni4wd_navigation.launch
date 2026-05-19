@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Arguments -->
+  <arg name="map_file" default="$(find x_omni4wd_gazebo)/maps/map.yaml"/>
+  <arg name="open_rviz" default="true"/>
+  <arg name="move_forward_only" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+
+  <!-- Launch Gazebo with robot -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find x_omni4wd_gazebo)/worlds/empty.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+  <!-- Load robot description -->
+  <param name="robot_description" 
+         textfile="$(find x_omni4wd_description)/urdf/x_omni4wd_description.urdf" />
+
+  <!-- Spawn robot -->
+  <arg name="x" default="0.0" />
+  <arg name="y" default="0.0" />
+  <arg name="z" default="0.5" />
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model"
+        args="-urdf -x $(arg x) -y $(arg y) -z $(arg z) -model x_omni4wd -param robot_description"
+        output="screen" />
+
+  <!-- Load ROS Control configuration -->
+  <rosparam file="$(find x_omni4wd_gazebo)/config/x_omni4wd_control.yaml" command="load"/>
+
+  <!-- Spawn ROS Control controllers -->
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+        output="screen" ns="/x_omni4wd"
+        args="joint_state_controller
+              front_left_wheel_controller
+              rear_left_wheel_controller
+              rear_right_wheel_controller
+              front_right_wheel_controller"/>
+
+  <!-- Robot State Publisher -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+        respawn="false" output="screen">
+    <remap from="/joint_states" to="/x_omni4wd/joint_states"/>
+  </node>
+
+  <!-- Static transform from base_link to base_footprint (for navigation) -->
+  <node pkg="tf" type="static_transform_publisher" name="base_to_footprint"
+        args="0 0 0 0 0 0 base_link base_footprint 100"/>
+
+  <!-- Python Controller Node -->
+  <node name="x_omni4wd_controller" pkg="x_omni4wd_gazebo" type="x_omni4wd_controller.py"
+        output="screen" respawn="true">
+    <env name="PYTHONUNBUFFERED" value="1"/>
+  </node>
+
+  <!-- Odometry Publisher -->
+  <node name="x_omni4wd_odom_pub" pkg="x_omni4wd_gazebo" type="x_omni4wd_odom_pub.py"
+        output="screen" respawn="true">
+    <env name="PYTHONUNBUFFERED" value="1"/>
+  </node>
+
+  <!-- Map Server -->
+  <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
+
+  <!-- AMCL -->
+  <include file="$(find x_omni4wd_gazebo)/launch/amcl.launch"/>
+
+  <!-- Move Base -->
+  <include file="$(find x_omni4wd_gazebo)/launch/move_base.launch">
+    <arg name="move_forward_only" value="$(arg move_forward_only)"/>
+  </include>
+
+  <!-- RViz -->
+  <group if="$(arg open_rviz)">
+    <node pkg="rviz" type="rviz" name="rviz" required="true"
+          args="-d $(find x_omni4wd_description)/rviz/x_omni4wd_navigation.rviz"/>
+  </group>
+
+</launch>
+

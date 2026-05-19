@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>x_omni4wd_gazebo</name>
+  <version>0.1.0</version>
+  <description>The x_omni4wd_gazebo package - Gazebo simulation for 4 wheel omni-directional robot</description>
+
+  <maintainer email="anhquyentp34@gmail.com">quyenanh pt</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>gazebo_ros</build_depend>
+  <build_depend>gazebo_plugins</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>x_omni4wd_description</build_depend>
+  <build_depend>controller_manager</build_depend>
+  <build_depend>joint_state_controller</build_depend>
+  <build_depend>effort_controllers</build_depend>
+  <build_depend>gazebo_ros_control</build_depend>
+
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>gazebo_plugins</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>tf</exec_depend>
+  <exec_depend>x_omni4wd_description</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>joint_state_controller</exec_depend>
+  <exec_depend>effort_controllers</exec_depend>
+  <exec_depend>gazebo_ros_control</exec_depend>
+  <exec_depend>python-numpy</exec_depend>
+  <exec_depend>x_omni4wd_slam</exec_depend>
+  <exec_depend>hector_mapping</exec_depend>
+  <exec_depend>rviz</exec_depend>
+
+</package>
+

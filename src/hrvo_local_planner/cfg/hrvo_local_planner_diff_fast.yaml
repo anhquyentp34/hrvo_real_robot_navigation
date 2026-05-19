@@ -1,0 +1,56 @@
+# Profile phản ứng nhanh trong môi trường đông người (gần HRVO_ws: pref/max ~1.5 m/s).
+# Dùng: roslaunch ... hrvo_config:=$(find hrvo_local_planner)/cfg/hrvo_local_planner_diff_fast.yaml
+HRVOLocalPlanner:
+  holonomic_mode: false
+  allow_backward: true
+  max_vel_x: 1.2
+  max_vel_x_backwards: 1.0
+  max_vel_y: 0.0
+  max_vel_theta: 2.0
+  acc_lim_x: 1.2
+  acc_lim_y: 0.5
+  acc_lim_theta: 2.0
+
+  xy_goal_tolerance: 0.25
+  yaw_goal_tolerance: 0.25
+  lookahead_dist: 4.0
+  goal_reset_every: 24
+  goal_update_dist: 0.40
+  min_vnorm_dir: 0.02
+
+  neighbor_dist: 10.0
+  max_neighbors: 30
+  max_other_agents_for_hrvo: 100
+  static_agent_speed_thresh: 0.05
+  robot_radius: 0.28
+  goal_radius: 0.25
+  pref_speed: 1.2
+  max_speed: 1.4
+  uncertainty_offset: 0.12
+  max_accel: 1.5
+  time_step: 0.05
+
+  heading_kp: 3.2
+  heading_brake_angle: 1.80
+  min_speed_turning_scale: 0.40
+  slowdown_cos: false
+  stop_yaw_error: 0.55
+  rotate_enter_error: 0.45
+  rotate_exit_error: 0.25
+
+  use_hrvo_input_topic: true
+  hrvo_input_topic: /hrvo/input
+  hrvo_input_timeout: 0.5
+  use_hrvo_input_robot_state: true
+  agent_fusion_policy: merge
+  agent_duplicate_radius: 0.35
+
+  use_gazebo_agents: false
+  use_tracked_people: false
+  allow_world_as_global_when_tf_fails: true
+
+  use_costmap_safety: true
+  obstacle_cost_threshold: 254
+  safety_rollout_time: 0.30
+  safety_dt: 0.06
+  safety_radius_padding: 0.0

@@ -14,8 +14,8 @@
   <arg name="yaw" default="0.0"/>
 
 
-  <include file="$(find diff_decription)/launch/description.launch">
-  </include>
+  <arg name="gpu" default="false"/>
+  <param name="robot_description" command="$(find xacro)/xacro $(find diff_description)/urdf/diff_bot.urdf.xacro gpu:=$(arg gpu)"/>
 
   <group ns="$(arg namespace)">
   

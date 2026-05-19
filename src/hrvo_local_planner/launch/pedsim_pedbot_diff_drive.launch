@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<launch>
+  <!--
+    Pedsim + robot ảo diff-drive (giống HRVO_ws simulator_diff_drive).
+    Không Gazebo. Điều khiển: remap nguồn cmd_vel -> /pedbot/control/cmd_vel_hrvo.
+    Kết hợp move_base: xem diff_bot_simulation.launch (Gazebo) hoặc tự remap cmd_vel.
+  -->
+  <arg name="scene_file" default="$(find diff_simulation)/scenarios/singleagent_10.xml"/>
+  <arg name="project_hrvo_to_forward" default="true"/>
+  <arg name="visualize" default="true"/>
+
+  <node name="pedsim_simulator" pkg="pedsim_simulator" type="pedsim_simulator" output="screen">
+    <param name="scene_file" value="$(arg scene_file)" type="string"/>
+    <param name="enable_groups" value="true" type="bool"/>
+    <param name="update_rate" value="25.0" type="double"/>
+  </node>
+
+  <group if="$(arg visualize)">
+    <include file="$(find pedsim_visualizer)/launch/visualizer.launch"/>
+  </group>
+
+  <group ns="pedbot/control">
+    <include file="$(find pedsim_simulator)/launch/robot_controller_diff_drive.launch">
+      <arg name="project_hrvo_to_forward" value="$(arg project_hrvo_to_forward)"/>
+    </include>
+  </group>
+</launch>

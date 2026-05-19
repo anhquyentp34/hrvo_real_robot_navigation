@@ -1,0 +1,30 @@
+# Controllers configuration for x_omni4wd robot with ros_control
+# This file defines joint_state_controller and 4 wheel velocity controllers
+# Used with individual JointVelocityController for each wheel
+
+x_omni4wd:
+  # Joint State Controller - publish_rate cao giúp TF bám sát thời gian sim (giảm extrapolation)
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 100
+
+  # Front Left Wheel Velocity Controller
+  front_left_wheel_velocity_controller:
+    type: velocity_controllers/JointVelocityController
+    joint: front_left_wheel_link_joint
+
+  # Rear Left Wheel Velocity Controller
+  rear_left_wheel_velocity_controller:
+    type: velocity_controllers/JointVelocityController
+    joint: rear_left_wheel_link_joint
+
+  # Rear Right Wheel Velocity Controller
+  rear_right_wheel_velocity_controller:
+    type: velocity_controllers/JointVelocityController
+    joint: rear_right_wheel_link_joint
+
+  # Front Right Wheel Velocity Controller
+  front_right_wheel_velocity_controller:
+    type: velocity_controllers/JointVelocityController
+    joint: front_right_wheel_link_joint
+

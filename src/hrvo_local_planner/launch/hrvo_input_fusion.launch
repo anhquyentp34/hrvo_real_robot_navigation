@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="pedsim_topic" default="/pedsim_simulator/simulated_agents"/>
+  <arg name="odom_topic" default="/odom"/>
+  <arg name="amcl_topic" default="/amcl_pose"/>
+  <arg name="robot_pose_source" default="odom"/>
+  <arg name="global_path_topic" default="/move_base/NavfnROS/plan"/>
+  <arg name="global_path_fallback_topic" default="/move_base/GlobalPlanner/plan"/>
+  <!-- Để trống = dùng /move_base/HRVOLocalPlanner/lookahead_dist (preload trong move_base_hrvo.launch) -->
+  <arg name="lookahead_dist" default=""/>
+  <arg name="max_agent_distance" default="8.0"/>
+  <arg name="target_marker_topic" default="/hrvo/target_marker"/>
+  <arg name="output_topic" default="/hrvo/input"/>
+  <arg name="output_frame" default="map"/>
+  <arg name="publish_rate" default="20.0"/>
+  <arg name="agent_radius" default="0.38"/>
+  <arg name="use_static_obstacles" default="true"/>
+  <arg name="static_obstacle_map_topic" default="/move_base/global_costmap/costmap"/>
+  <arg name="static_cost_threshold" default="90"/>
+  <arg name="static_sample_step" default="2"/>
+  <arg name="static_obstacle_radius" default="0.32"/>
+  <arg name="static_max_agents" default="300"/>
+
+  <node pkg="hrvo_local_planner" type="hrvo_input_fusion_node.py" name="hrvo_input_fusion_node" output="screen">
+    <param name="pedsim_topic" value="$(arg pedsim_topic)"/>
+    <param name="odom_topic" value="$(arg odom_topic)"/>
+    <param name="amcl_topic" value="$(arg amcl_topic)"/>
+    <param name="robot_pose_source" value="$(arg robot_pose_source)"/>
+    <param name="global_path_topic" value="$(arg global_path_topic)"/>
+    <param name="global_path_fallback_topic" value="$(arg global_path_fallback_topic)"/>
+    <param if="$(eval arg('lookahead_dist') != '')" name="lookahead_dist" value="$(arg lookahead_dist)"/>
+    <param name="max_agent_distance" value="$(arg max_agent_distance)"/>
+    <param name="target_marker_topic" value="$(arg target_marker_topic)"/>
+    <param name="output_topic" value="$(arg output_topic)"/>
+    <param name="output_frame" value="$(arg output_frame)"/>
+    <param name="publish_rate" value="$(arg publish_rate)"/>
+    <param name="agent_radius" value="$(arg agent_radius)"/>
+    <param name="use_static_obstacles" value="$(arg use_static_obstacles)"/>
+    <param name="static_obstacle_map_topic" value="$(arg static_obstacle_map_topic)"/>
+    <param name="static_cost_threshold" value="$(arg static_cost_threshold)"/>
+    <param name="static_sample_step" value="$(arg static_sample_step)"/>
+    <param name="static_obstacle_radius" value="$(arg static_obstacle_radius)"/>
+    <param name="static_max_agents" value="$(arg static_max_agents)"/>
+  </node>
+</launch>

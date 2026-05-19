@@ -1,29 +1,43 @@
 <?xml version="1.0"?>
-
 <launch>
-  <!-- run pointcloud_to_laserscan node -->
-    <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
+  <!--
+    Cấu hình linh hoạt để dùng cho cả:
+    - Velodyne thực (thường /velodyne_points)
+    - Velodyne mô phỏng GPU/CPU (/velodyne_points_gpu, /velodyne_points_cpu)
+  -->
+  <arg name="cloud_in" default="/velodyne_points"/>
+  <arg name="scan_out" default="/scan"/>
+  <arg name="target_frame" default="base_footprint"/>
 
-       <!-- <remap from="cloud_in" to="/velodyne_points_cpu"/> -->
-          <remap from="cloud_in" to="/velodyne_points_gpu"/> 
-	<!-- <remap from="cloud_in" to="/velodyne_points"/> -->
-        <!--remap from="scan" to="/camera/scan"/-->
+  <arg name="transform_tolerance" default="0.01"/>
+  <arg name="min_height" default="0.0"/>
+  <arg name="max_height" default="1.0"/>
+  <arg name="angle_min" default="-3.14"/>
+  <arg name="angle_max" default="3.14"/>
+  <arg name="angle_increment" default="0.0087"/>
+  <arg name="scan_time" default="0.0"/>
+  <arg name="rate" default="40.0"/>
+  <arg name="range_min" default="0.45"/>
+  <arg name="range_max" default="10.0"/>
+  <arg name="use_inf" default="true"/>
 
-        <rosparam>
-            #target_frame: upper_base_link 
-            transform_tolerance: 0.01
-            min_height: 0.0
-            max_height: 1.0
-
-            angle_min: -3.14 # -M_PI
-            angle_max: 3.14 # M_PI
-            angle_increment: 0.0087 # M_PI/360.0
-            scan_time: 0.0 # 0.3333
-            rate: 40.0
-            range_min: 0.45
-            range_max: 10.0
-            concurrency_level: 0 # defaul: 1
-            use_inf: true
-        </rosparam>
-    </node>
+  <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
+    <remap from="cloud_in" to="$(arg cloud_in)"/>
+    <remap from="scan" to="$(arg scan_out)"/>
+    <rosparam subst_value="true">
+      target_frame: $(arg target_frame)
+      transform_tolerance: $(arg transform_tolerance)
+      min_height: $(arg min_height)
+      max_height: $(arg max_height)
+      angle_min: $(arg angle_min)
+      angle_max: $(arg angle_max)
+      angle_increment: $(arg angle_increment)
+      scan_time: $(arg scan_time)
+      rate: $(arg rate)
+      range_min: $(arg range_min)
+      range_max: $(arg range_max)
+      concurrency_level: 0
+      use_inf: $(arg use_inf)
+    </rosparam>
+  </node>
 </launch>

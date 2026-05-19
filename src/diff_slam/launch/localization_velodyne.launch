@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<launch>
+ <arg name="custom_amcl_launch_file" default="$(find diff_slam)/launch/amcl.launch"/>
+ <arg name="velodyne_cloud_in" default="/velodyne_points_gpu"/>
+ <arg name="world_name" default="$(find diff_gazebo)/worlds/kb_1.world"/>
+
+ <!-- Map Server Arguments minh_map-->
+ <arg name="map_file" default="$(find diff_slam)/maps/kb_1.yaml"/>
+ <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)">
+    <param name="frame_id" value="map"/>
+ </node>
+
+ <!-- Point cloud Velodyne → /scan (costmap dùng LaserScan) -->
+ <include file="$(find pointcloud_to_scan)/launch/pointcloud2scan.launch">
+   <arg name="cloud_in" value="$(arg velodyne_cloud_in)"/>
+ </include>
+
+ <!-- Gazebo Velodyne -->
+ <include file="$(find diff_gazebo)/launch/diff_model_velodyne.launch">
+   <arg name="world_name" value="$(arg world_name)"/>
+ </include>
+
+ <!-- AMCL -->
+ <include file="$(arg custom_amcl_launch_file)"/>
+
+ <!-- RViz (tuỳ chọn) -->
+ <!-- <node name="rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find diff_rviz)/rviz/amcl.rviz"/> -->
+</launch>
+

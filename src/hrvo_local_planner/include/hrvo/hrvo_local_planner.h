@@ -12,6 +12,7 @@
 #include <nav_msgs/Path.h>
 #include <gazebo_msgs/ModelStates.h>
 #include <people_msgs/People.h>
+#include <hrvo_local_planner/HRVOInput.h>
 
 #include <memory>
 #include <mutex>
@@ -68,6 +69,7 @@ private:
   // callbacks
   void modelStatesCb(const gazebo_msgs::ModelStates::ConstPtr& msg);
   void trackedPeopleCb(const people_msgs::People::ConstPtr& msg);
+  void hrvoInputCb(const hrvo_local_planner::HRVOInput::ConstPtr& msg);
 
   // helpers
   bool getRobotPose(geometry_msgs::PoseStamped& pose_out) const;
@@ -75,8 +77,16 @@ private:
       const geometry_msgs::PoseStamped& robot_pose) const;
 
   std::vector<OtherAgent> buildOtherAgents() const;
+  void prioritizeOtherAgents(std::vector<OtherAgent>& agents,
+                               double robot_x, double robot_y) const;
+  std::vector<OtherAgent> buildOtherAgentsFromHRVOInput() const;
   std::vector<OtherAgent> buildOtherAgentsFromGazebo() const;
   std::vector<OtherAgent> buildOtherAgentsFromTrackedPeople() const;
+
+  /** True if candidate is within duplicate_radius (m) of any agent already in out. */
+  static bool nearExistingAgent(const OtherAgent& candidate,
+                                const std::vector<OtherAgent>& out,
+                                double duplicate_radius);
 
   void resetSimulator(const geometry_msgs::PoseStamped& robot_pose,
                       const geometry_msgs::PoseStamped& target);
@@ -107,6 +117,7 @@ private:
 
   ros::Subscriber model_states_sub_;
   ros::Subscriber tracked_people_sub_;
+  ros::Subscriber hrvo_input_sub_;
   ros::Publisher local_plan_pub_;
 
   // global plan
@@ -134,10 +145,17 @@ private:
   std::unordered_map<std::string, TrackedPersonState> tracked_people_;
   ros::Time last_people_stamp_;
 
+  // fused HRVO input cache
+  bool have_hrvo_input_{false};
+  hrvo_local_planner::HRVOInput last_hrvo_input_;
+  ros::Time last_hrvo_input_stamp_;
+
     // limits
   double max_vel_x_;
+  double max_vel_y_;
   double max_vel_theta_;
   double acc_lim_x_;
+  double acc_lim_y_;
   double acc_lim_theta_;
 
   // goal / tracking
@@ -151,6 +169,8 @@ private:
   // hrvo params
   double neighbor_dist_;
   int max_neighbors_;
+  int max_other_agents_for_hrvo_;
+  double static_agent_speed_thresh_;
   double robot_radius_;
   double goal_radius_;
   double pref_speed_;
@@ -159,10 +179,22 @@ private:
   double max_accel_;
   double time_step_;
 
-  // diff-drive mapping
+  // command mapping
+  bool holonomic_mode_{false};
   double heading_kp_;
+  double heading_brake_angle_;
+  double min_speed_turning_scale_;
   bool slowdown_cos_;
   double stop_yaw_error_;
+  double rotate_enter_error_;
+  double rotate_exit_error_;
+  bool rotate_in_place_mode_{true};
+  bool allow_backward_{true};
+  double max_vel_x_backwards_{-1.0};  // <0: dùng max_vel_x_
+
+  double maxVelXBackwards() const {
+    return (max_vel_x_backwards_ > 0.0) ? max_vel_x_backwards_ : max_vel_x_;
+  }
 
   // gazebo agents
   bool use_gazebo_agents_;
@@ -180,6 +212,22 @@ private:
   double tracked_person_radius_;
   double people_velocity_alpha_;
   double min_people_speed_for_hrvo_;
+
+  // unified input
+  bool use_hrvo_input_topic_;
+  std::string hrvo_input_topic_;
+  double hrvo_input_timeout_;
+  bool use_hrvo_input_robot_state_;
+
+  /**
+   * Dynamic obstacle fusion for HRVO other-agents.
+   * - merge: HRVOInput agents first, then Gazebo / tracked people not within
+   *   agent_duplicate_radius_ of an already-added agent (meters).
+   * - hrvo_input_only: only /hrvo/input (or configured topic) agents.
+   */
+  std::string agent_fusion_policy_;
+  double agent_duplicate_radius_;
+  std::string gazebo_model_states_topic_;
 
   // robustness
   bool allow_world_as_global_when_tf_fails_;

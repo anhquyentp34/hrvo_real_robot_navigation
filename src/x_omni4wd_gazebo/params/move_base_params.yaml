@@ -1,0 +1,13 @@
+# Khi dùng với move_base + RF2O (x_omni4wd_slam), nên dùng planner_frequency 2.5, controller_patience 22, oscillation_timeout 15
+# để move_base báo SUCCEEDED ổn định. Xem diffbot_navigation/docs/MOVE_BASE_SUCCEEDED_X_OMNI4WD.md và x_omni4wd_simulation/config/move_base_params.yaml
+shutdown_costmaps: false
+
+controller_frequency: 20.0
+controller_patience: 22.0   # 22 khi dùng RF2O (navigation); 3.0 nếu chỉ test không nav
+
+planner_frequency: 2.5     # 2.5 khi dùng RF2O để ít replan; 1.0 nếu cấu hình cũ
+planner_patience: 5.0
+
+oscillation_timeout: 15.0  # 15 khi odom nhiễu (RF2O)
+oscillation_distance: 0.2
+

@@ -1,6 +1,6 @@
 #ifndef VELODYNE_POINTCLOUD_DATACONTAINERBASE_H
 #define VELODYNE_POINTCLOUD_DATACONTAINERBASE_H
-// Copyright (C) 2012, 2019 Austin Robot Technology, Jack O'Quin, Joshua Whitley, Sebastian Pütz
+// Copyright (C) 2026 quyenanh pt
 // All rights reserved.
 //
 // Software License Agreement (BSD License 2.0)

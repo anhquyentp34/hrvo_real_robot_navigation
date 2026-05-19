@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<!--
+  Teleop bàn phím (omni + làm mượt) cho x_omni4wd.
+
+  Chỉ node teleop:
+    roslaunch x_omni4wd_keyboard_teleop x_omni4wd_keyboard_teleop.launch
+
+  Kèm bringup robot thật (Arduino serial mặc định):
+    roslaunch x_omni4wd_keyboard_teleop x_omni4wd_keyboard_teleop.launch launch_robot:=true
+-->
+<launch>
+  <arg name="cmd_vel_topic" default="/cmd_vel"/>
+  <arg name="launch_robot" default="true"/>
+
+  <arg name="lidar_port" default="/dev/robot_lidar"/>
+  <arg name="use_lidar" default="false"/>
+  <arg name="use_ros_control" default="false"/>
+  <arg name="use_serial_firmware" default="true"/>
+  <arg name="arduino_port" default="/dev/robot_arduino"/>
+  <!-- Chỉ ảnh hưởng Twist từ node teleop này (đảo angular.z trước khi publish cmd_vel) -->
+  <arg name="invert_angular_z" default="false"/>
+
+  <arg name="max_vx" default="0.5"/>
+  <arg name="max_vy" default="0.5"/>
+  <arg name="max_wz" default="1.0"/>
+  <arg name="accel_linear" default="1.5"/>
+  <arg name="accel_angular" default="2.5"/>
+  <arg name="publish_rate" default="50.0"/>
+  <arg name="use_arrow_keys" default="true"/>
+
+  <group if="$(arg launch_robot)">
+    <include file="$(find x_omni4wd_bringup)/launch/x_omni4wd_bringup.launch">
+      <arg name="cmd_vel_topic" value="$(arg cmd_vel_topic)"/>
+      <arg name="lidar_port" value="$(arg lidar_port)"/>
+      <arg name="use_lidar" value="$(arg use_lidar)"/>
+      <arg name="use_ros_control" value="$(arg use_ros_control)"/>
+      <arg name="use_serial_firmware" value="$(arg use_serial_firmware)"/>
+      <arg name="arduino_port" value="$(arg arduino_port)"/>
+      <arg name="open_rviz" value="false"/>
+      <arg name="use_rqt_omni_robot_steering" value="false"/>
+    </include>
+  </group>
+
+  <node pkg="x_omni4wd_keyboard_teleop" type="x_omni4wd_keyboard_teleop.py"
+        name="x_omni4wd_keyboard_teleop" output="screen">
+    <param name="cmd_topic" value="$(arg cmd_vel_topic)"/>
+    <param name="max_vx" value="$(arg max_vx)"/>
+    <param name="max_vy" value="$(arg max_vy)"/>
+    <param name="max_wz" value="$(arg max_wz)"/>
+    <param name="accel_linear" value="$(arg accel_linear)"/>
+    <param name="accel_angular" value="$(arg accel_angular)"/>
+    <param name="publish_rate" value="$(arg publish_rate)"/>
+    <param name="use_arrow_keys" value="$(arg use_arrow_keys)"/>
+    <param name="invert_angular_z" value="$(arg invert_angular_z)"/>
+    <!-- Mặc định: |vx|,|vy| tới max khi giữ phím -->
+    <param name="vx_forward" value="$(arg max_vx)"/>
+    <param name="vx_backward" value="$(arg max_vx)"/>
+    <param name="vy_left" value="$(arg max_vy)"/>
+    <param name="vy_right" value="$(arg max_vy)"/>
+    <param name="wz_ccw" value="$(arg max_wz)"/>
+    <param name="wz_cw" value="$(arg max_wz)"/>
+  </node>
+</launch>

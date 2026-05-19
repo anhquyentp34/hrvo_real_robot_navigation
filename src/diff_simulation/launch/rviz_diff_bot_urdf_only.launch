@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<launch>
+  <!--
+    Chỉ RViz + URDF (không Gazebo): hiển thị model diff_bot, chỉnh khớp bằng GUI.
+    Fixed Frame trong RViz: để "base_footprint" (mặc định trong gazebo_spawn_model.rviz).
+
+    Lưu ý: RViz KHÔNG spawn robot vào Gazebo. Để đặt cao/thấp robot trong mô phỏng Gazebo dùng
+    roslaunch diff_simulation diff_bot_simulation.launch z_pos:=0.5 ...
+  -->
+  <arg name="gpu" default="false"/>
+  <arg name="velodyne_visualize" default="false"/>
+  <arg name="rviz_config" default="$(find diff_description)/rviz/gazebo_spawn_model.rviz"/>
+
+  <param name="/use_sim_time" value="false"/>
+
+  <param name="robot_description"
+         command="$(find xacro)/xacro $(find diff_description)/urdf/diff_bot.urdf.xacro gpu:=$(arg gpu) velodyne_visualize:=$(arg velodyne_visualize)"/>
+
+  <node name="joint_state_publisher_gui"
+        pkg="joint_state_publisher_gui"
+        type="joint_state_publisher_gui"
+        output="screen"/>
+
+  <node name="robot_state_publisher"
+        pkg="robot_state_publisher"
+        type="robot_state_publisher"
+        output="screen">
+    <param name="publish_frequency" type="double" value="50.0"/>
+    <param name="use_tf_static" value="true"/>
+  </node>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rviz_config)" output="screen"/>
+</launch>

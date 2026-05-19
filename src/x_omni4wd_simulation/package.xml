@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>x_omni4wd_simulation</name>
+  <version>1.0.0</version>
+  <description>Simulation and costmap extension for x_omni4wd (laser filter, test layers)</description>
+
+  <maintainer email="anhquyentp34@gmail.com">quyenanh pt</maintainer>
+  <license>BSDv3</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>amcl</exec_depend>
+  <exec_depend>map_server</exec_depend>
+  <exec_depend>move_base</exec_depend>
+  <exec_depend>base_local_planner</exec_depend>
+  <exec_depend>dwa_local_planner</exec_depend>
+  <exec_depend>teb_local_planner</exec_depend>
+  <exec_depend>laser_filters</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>gazebo_ros_actor_plugin</exec_depend>
+  <exec_depend>x_omni4wd_gazebo</exec_depend>
+  <exec_depend>x_omni4wd_navigation</exec_depend>
+  <exec_depend>x_omni4wd_control</exec_depend>
+  <exec_depend>x_omni4wd_slam</exec_depend>
+  <exec_depend>x_omni4wd_description</exec_depend>
+  <exec_depend>hrvo_local_planner</exec_depend>
+  <exec_depend>diff_navigation</exec_depend>
+  <exec_depend>diff_simulation</exec_depend>
+  <exec_depend>diff_slam</exec_depend>
+  <exec_depend>pedsim_simulator</exec_depend>
+  <exec_depend>pedsim_gazebo_plugin</exec_depend>
+  <exec_depend>social_density_fusion</exec_depend>
+
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>gazebo_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
+  <exec_depend>tf</exec_depend>
+  <exec_depend>animated_marker_msgs</exec_depend>
+  <exec_depend>animated_marker_rviz_plugin</exec_depend>
+  <exec_depend>animated_marker_tutorial</exec_depend>
+
+</package>

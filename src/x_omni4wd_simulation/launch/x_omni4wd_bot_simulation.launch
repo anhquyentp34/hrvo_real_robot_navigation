@@ -1,0 +1,239 @@
+<?xml version="1.0"?>
+<launch>
+  <!--
+    Bản omni của diff_simulation/diff_bot_simulation.launch (local_planner:=hrvo).
+    Thay diff_bot (2 bánh vi sai) bằng x_omni4wd (4 bánh omni + ros_control).
+
+    Chạy:
+      roslaunch x_omni4wd_simulation x_omni4wd_bot_simulation.launch
+      roslaunch x_omni4wd_simulation x_omni4wd_bot_simulation.launch local_planner:=hrvo
+  -->
+
+  <arg name="world_name" default="$(find pedsim_gazebo_plugin)/worlds/singleagent.world"/>
+  <arg name="map_file" default="$(find diff_slam)/maps/singleagent_centered.yaml"/>
+  <arg name="debug" default="false"/>
+  <arg name="gui" default="true"/>
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="physics" default="ode"/>
+  <arg name="extra_gazebo_args" default="--verbose"/>
+
+  <arg name="spawn_delay" default="2.0"/>
+  <arg name="controller_spawner_delay" default="$(eval arg('spawn_delay') + 3.0)"/>
+  <arg name="rf2o_startup_delay" default="$(eval arg('spawn_delay') + 1.0)"/>
+  <arg name="rviz_startup_delay" default="$(eval arg('spawn_delay') + 1.0)"/>
+  <arg name="x_pos" default="0.0"/>
+  <arg name="y_pos" default="0.0"/>
+  <arg name="z_pos" default="0.095"/>
+  <arg name="yaw" default="0.0"/>
+  <arg name="model_name" default="x_omni4wd"/>
+
+  <arg name="scan_raw_topic" default="/scan"/>
+  <arg name="scan_topic" default="/scan_filtered"/>
+  <arg name="laser_filter_config" default="$(find x_omni4wd_simulation)/config/laser_filter_params.yaml"/>
+  <arg name="odom_topic" default="/odom"/>
+  <arg name="cmd_vel_topic" default="/cmd_vel"/>
+  <arg name="odom_frame_id" default="odom"/>
+  <arg name="base_frame_id" default="base_footprint"/>
+  <arg name="global_frame_id" default="map"/>
+
+  <arg name="local_planner" default="hrvo" doc="teb | dwa | hrvo"/>
+  <arg name="static_tf" default="false"/>
+  <arg name="map_odom_mode" default="identity_static" doc="identity_static | amcl"/>
+  <arg name="use_static_map_localization" default="true"/>
+  <arg name="use_rviz" default="true"/>
+  <arg name="rvizconfig" default="$(find x_omni4wd_navigation)/rviz/x_omni4wd_simulation.rviz"/>
+  <arg name="open_rviz_immediately" default="false"/>
+
+  <arg name="use_tracked_people" default="false"/>
+  <arg name="tracked_people_topic" default="/people"/>
+  <arg name="use_gazebo_agents" default="false"/>
+  <arg name="hrvo_publish_input_fusion" default="true"/>
+  <arg name="hrvo_agent_fusion_policy" default="merge"/>
+  <arg name="hrvo_use_hrvo_input_robot_state" default="true"/>
+  <arg name="hrvo_profile" default="default"/>
+  <arg name="hrvo_config" default="$(find hrvo_local_planner)/cfg/hrvo_local_planner_omni.yaml"
+       if="$(eval arg('hrvo_profile') == 'default')"/>
+  <arg name="hrvo_config" default="$(find hrvo_local_planner)/cfg/hrvo_local_planner_omni_fast.yaml"
+       unless="$(eval arg('hrvo_profile') == 'default')"/>
+
+  <arg name="enable_pedsim" default="true"/>
+  <arg name="enable_actor_visualization" default="true"/>
+  <arg name="enable_social_density_fusion" default="true"/>
+  <arg name="social_density_config" default="$(find social_density_fusion)/config/costmapEx_33_people.yaml"/>
+  <arg name="pedsim_scene_file" default="$(find diff_simulation)/scenarios/singleagent_10.xml"/>
+  <arg name="pedsim_default_queue_size" default="10"/>
+  <arg name="pedsim_max_robot_speed" default="1.5"/>
+  <arg name="pedsim_robot_mode" default="1"/>
+  <arg name="pedsim_enable_groups" default="true"/>
+  <arg name="pedsim_simulation_factor" default="1.0"/>
+  <arg name="pedsim_update_rate" default="15.0"/>
+  <arg name="pedsim_spawn_delay_sec" default="0.5"/>
+
+  <!-- Omni: ros_control + cmd_vel -> 4 bánh -->
+  <arg name="L_HALF" default="0.176776695"/>
+  <arg name="W_HALF" default="0.176776695"/>
+  <arg name="wheel_radius" default="0.0635"/>
+  <arg name="max_wheel_speed" default="22.0"/>
+  <arg name="cmd_vel_to_wheels_timeout" default="0.5"/>
+  <arg name="joint_states_topic" default="/x_omni4wd/joint_states"/>
+
+  <env name="GAZEBO_MODEL_PATH" value="$(find x_omni4wd_gazebo)/models:$(find diff_gazebo)/worlds/models:$(find gazebo_ros_actor_plugin)/config/skins:$(optenv GAZEBO_MODEL_PATH)"/>
+  <env name="GAZEBO_RESOURCE_PATH" value="$(find x_omni4wd_gazebo)/worlds:$(find diff_gazebo)/worlds:$(optenv GAZEBO_RESOURCE_PATH)"/>
+  <env name="GAZEBO_PLUGIN_PATH" value="$(optenv GAZEBO_PLUGIN_PATH):$(find gazebo_ros_actor_plugin)/../../devel/lib:$(find pedsim_gazebo_plugin)/../../devel/lib"/>
+
+  <param name="/use_sim_time" value="$(arg use_sim_time)"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="physics" value="$(arg physics)"/>
+    <arg name="extra_gazebo_args" value="$(arg extra_gazebo_args)"/>
+  </include>
+
+  <group if="$(arg enable_pedsim)">
+    <node name="pedsim_simulator" pkg="pedsim_simulator" type="pedsim_simulator" output="screen">
+      <param name="scene_file" value="$(arg pedsim_scene_file)" type="string"/>
+      <param name="default_queue_size" value="$(arg pedsim_default_queue_size)" type="int"/>
+      <param name="max_robot_speed" value="$(arg pedsim_max_robot_speed)" type="double"/>
+      <param name="robot_mode" value="$(arg pedsim_robot_mode)" type="int"/>
+      <param name="enable_groups" value="$(arg pedsim_enable_groups)" type="bool"/>
+      <param name="simulation_factor" value="$(arg pedsim_simulation_factor)" type="double"/>
+      <param name="update_rate" value="$(arg pedsim_update_rate)" type="double"/>
+      <param name="frame_id" value="$(arg global_frame_id)"/>
+      <param name="gazebo_robot_model_name" value="$(arg model_name)" type="string"/>
+    </node>
+    <node pkg="pedsim_gazebo_plugin" type="spawn_pedsim_agents.py" name="spawn_pedsim_agents" output="screen">
+      <param name="spawn_delay_sec" value="$(arg pedsim_spawn_delay_sec)" type="double"/>
+    </node>
+  </group>
+
+  <include if="$(eval arg('enable_pedsim') and arg('enable_actor_visualization'))"
+           file="$(find pedsim_gazebo_plugin)/launch/actor_animated_markers.launch">
+    <arg name="frame_id" value="$(arg global_frame_id)"/>
+    <arg name="output_topic" value="/actor_visualization"/>
+    <arg name="input_source" value="pedsim"/>
+    <arg name="pedsim_topic" value="/pedsim_simulator/simulated_agents"/>
+  </include>
+
+  <include if="$(arg enable_social_density_fusion)" file="$(find social_density_fusion)/launch/social_density_fusion.launch">
+    <arg name="scenario_config" value="$(arg social_density_config)"/>
+    <arg name="scan_topic" value="$(arg scan_topic)"/>
+  </include>
+
+  <node if="$(eval arg('static_tf') and (not arg('use_static_map_localization')))"
+        pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom_tf"
+        args="0 0 0 0 0 0 map odom"/>
+
+  <!-- Robot omni 4 bánh (thay diff_bot.urdf.xacro) -->
+  <param name="robot_description" textfile="$(find x_omni4wd_description)/urdf/x_omni4wd_description.urdf"/>
+
+  <rosparam ns="/x_omni4wd" file="$(find x_omni4wd_simulation)/config/gazebo_ros_control_gains.yaml" command="load"/>
+  <rosparam file="$(find x_omni4wd_control)/config/controllers.yaml" command="load"/>
+
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+        args="-urdf -unpause -model $(arg model_name) -param robot_description -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -R 0 -P 0 -Y $(arg yaw)"
+        launch-prefix="bash -c 'sleep $(arg spawn_delay); exec $0 $@'"/>
+
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/x_omni4wd"
+        args="joint_state_controller front_left_wheel_velocity_controller rear_left_wheel_velocity_controller rear_right_wheel_velocity_controller front_right_wheel_velocity_controller"
+        launch-prefix="bash -c 'sleep $(arg controller_spawner_delay); exec $0 $@'"/>
+
+  <node name="cmd_vel_to_omni_wheels" pkg="x_omni4wd_control" type="cmd_vel_to_omni_wheels.py" output="screen">
+    <remap from="cmd_vel" to="$(arg cmd_vel_topic)"/>
+    <param name="L_HALF" value="$(arg L_HALF)"/>
+    <param name="W_HALF" value="$(arg W_HALF)"/>
+    <param name="wheel_radius" value="$(arg wheel_radius)"/>
+    <param name="max_wheel_speed" value="$(arg max_wheel_speed)"/>
+    <param name="cmd_timeout" value="$(arg cmd_vel_to_wheels_timeout)"/>
+  </node>
+
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"
+        respawn="false" output="screen">
+    <param name="use_gui" value="false"/>
+    <param name="publish_default_positions" value="true"/>
+    <rosparam subst_value="true">
+      source_list: ["$(arg joint_states_topic)"]
+    </rosparam>
+  </node>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+        respawn="false" output="screen">
+    <param name="publish_frequency" type="double" value="50.0"/>
+    <param name="use_tf_static" value="true"/>
+  </node>
+
+  <!-- Odom: rf2o từ /scan (diff_bot dùng odom plugin Gazebo diff-drive) -->
+  <node name="rf2o_laser_odometry" pkg="x_omni4wd_slam" type="x_omni4wd_slam_node" output="screen"
+        launch-prefix="bash -c 'sleep $(arg rf2o_startup_delay); exec $0 $@'">
+    <rosparam command="load" file="$(find x_omni4wd_slam)/config/rf2o_x_omni4wd.yaml"/>
+    <param name="laser_scan_topic" value="$(arg scan_raw_topic)"/>
+    <param name="odom_topic" value="$(arg odom_topic)"/>
+  </node>
+
+  <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="laser_filter">
+    <rosparam command="load" file="$(arg laser_filter_config)"/>
+    <remap from="scan" to="$(arg scan_raw_topic)"/>
+    <remap from="scan_filtered" to="$(arg scan_topic)"/>
+  </node>
+
+  <group if="$(arg use_static_map_localization)">
+    <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" output="screen">
+      <param name="frame_id" value="$(arg global_frame_id)"/>
+    </node>
+    <include if="$(eval arg('map_odom_mode') == 'amcl')"
+             file="$(find diff_simulation)/launch/includes/amcl/amcl.launch.xml">
+      <arg name="scan_topic" value="$(arg scan_topic)"/>
+      <arg name="initial_pose_x" value="$(arg x_pos)"/>
+      <arg name="initial_pose_y" value="$(arg y_pos)"/>
+      <arg name="initial_pose_a" value="$(arg yaw)"/>
+      <arg name="odom_frame_id" value="$(arg odom_frame_id)"/>
+      <arg name="base_frame_id" value="$(arg base_frame_id)"/>
+      <arg name="global_frame_id" value="$(arg global_frame_id)"/>
+      <arg name="amcl_startup_delay" value="$(eval arg('spawn_delay') + 0.5)"/>
+    </include>
+    <node if="$(eval arg('map_odom_mode') == 'identity_static')"
+          pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom_identity"
+          args="0 0 0 0 0 0 map odom"/>
+  </group>
+
+  <include if="$(eval arg('local_planner') == 'teb')" file="$(find diff_navigation)/launch/move_base_TEB1_velodyne.launch">
+    <arg name="cmd_vel_topic" value="$(arg cmd_vel_topic)"/>
+    <arg name="odom_topic" value="$(arg odom_topic)"/>
+    <arg name="scan_topic" value="$(arg scan_topic)"/>
+    <arg name="use_static_map_localization" value="$(arg use_static_map_localization)"/>
+  </include>
+
+  <include if="$(eval arg('local_planner') == 'dwa')" file="$(find diff_simulation)/launch/includes/move_base_diff_bot.launch.xml">
+    <arg name="odom_topic" value="$(arg odom_topic)"/>
+    <arg name="laser_topic" value="$(arg scan_topic)"/>
+    <arg name="cmd_vel_out" value="$(arg cmd_vel_topic)"/>
+  </include>
+
+  <include if="$(eval arg('local_planner') == 'hrvo')" file="$(find diff_navigation)/launch/move_base_hrvo_omni.launch">
+    <arg name="global_frame" value="$(arg global_frame_id)"/>
+    <arg name="odom_topic" value="$(arg odom_topic)"/>
+    <arg name="scan_topic" value="$(arg scan_topic)"/>
+    <arg name="cmd_vel_topic" value="$(arg cmd_vel_topic)"/>
+    <arg name="use_tracked_people" value="$(arg use_tracked_people)"/>
+    <arg name="tracked_people_topic" value="$(arg tracked_people_topic)"/>
+    <arg name="use_gazebo_agents" value="$(arg use_gazebo_agents)"/>
+    <arg name="publish_hrvo_input_msg" value="$(arg hrvo_publish_input_fusion)"/>
+    <arg name="agent_fusion_policy" value="$(arg hrvo_agent_fusion_policy)"/>
+    <arg name="use_hrvo_input_robot_state" value="$(arg hrvo_use_hrvo_input_robot_state)"/>
+    <arg name="hrvo_config" value="$(arg hrvo_config)"/>
+  </include>
+
+  <node if="$(eval arg('use_rviz') and (not arg('open_rviz_immediately')))"
+        pkg="rviz" type="rviz" name="rviz" required="false"
+        args="-d $(arg rvizconfig)"
+        launch-prefix="bash -c 'sleep $(arg rviz_startup_delay); exec $0 $@'"/>
+  <node if="$(eval arg('use_rviz') and arg('open_rviz_immediately'))"
+        pkg="rviz" type="rviz" name="rviz" required="false"
+        args="-d $(arg rvizconfig)"/>
+</launch>

@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Arguments -->
+  <arg name="robot_name" default="x_omni4wd" />
+  <arg name="pose_x" default="0" />
+  <arg name="pose_y" default="0" />
+  <arg name="pose_z" default="0.5" />
+  <arg name="world_name" default="$(find x_omni4wd_gazebo)/worlds/empty.world"/>
+  <arg name="use_sim_time" default="true" />
+  <arg name="gui" default="true" />
+  <arg name="headless" default="false" />
+
+  <!-- Set use_sim_time -->
+  <param name="use_sim_time" value="$(arg use_sim_time)"/>
+
+  <!-- Launch Gazebo -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+  <!-- Load robot description -->
+  <param name="robot_description" 
+         textfile="$(find x_omni4wd_description)/urdf/x_omni4wd_description.urdf" />
+
+  <!-- Robot State Publisher để publish TF -->
+  <node pkg="robot_state_publisher" type="robot_state_publisher" 
+        name="robot_state_publisher" output="screen">
+    <param name="publish_frequency" value="50.0"/>
+  </node>
+
+  <!-- Spawn robot vào Gazebo -->
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model"
+        args="-urdf -model $(arg robot_name) -param robot_description 
+              -x $(arg pose_x) -y $(arg pose_y) -z $(arg pose_z)" 
+        output="screen"/>
+
+</launch>
+

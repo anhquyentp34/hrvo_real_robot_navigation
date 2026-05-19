@@ -1,4 +1,4 @@
-// Copyright (C) 2018, 2019 Kevin Hallenbeck, Joshua Whitley
+// Copyright (C) 2026 quyenanh pt
 // All rights reserved.
 //
 // Software License Agreement (BSD License 2.0)

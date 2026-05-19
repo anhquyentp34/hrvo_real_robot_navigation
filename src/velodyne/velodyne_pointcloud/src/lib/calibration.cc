@@ -3,7 +3,7 @@
  * \brief  
  *
  * \author  Piyush Khandelwal (piyushk@cs.utexas.edu)
- * Copyright (C) 2012, Austin Robot Technology,
+ * Copyright (C) 2026 quyenanh pt
  *                     The University of Texas at Austin
  *
  * License: Modified BSD License

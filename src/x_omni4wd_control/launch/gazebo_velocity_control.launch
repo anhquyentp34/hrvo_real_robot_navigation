@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<launch>
+  <!--
+    Launch file for Gazebo simulation with ROS Control velocity control, RViz visualization, and rqt_omni_robot_steering.
+    
+    This launch file provides complete velocity control setup by including gazebo_spawn_model_rviz.launch
+    and adding ROS Control specific components:
+    1. Includes: Gazebo, robot spawn, static TF, joint_state_publisher, robot_state_publisher (from gazebo_spawn_model_rviz.launch)
+    2. Configures robot_state_publisher to subscribe from /x_omni4wd/joint_states (from ROS Control)
+    3. Loads ROS Control controllers configuration
+    4. Starts velocity controllers (4 wheel velocity controllers)
+    5. Starts kinematics node (cmd_vel -> wheel velocities)
+    6. Starts RViz for visualization
+    7. Starts rqt_omni_robot_steering for GUI control (vx, vy, w) for omni-directional robot
+    
+    This is the main launch file for controlling robot with cmd_vel in Gazebo.
+    For simple spawn without control, use: x_omni4wd_description/gazebo_spawn_model.launch
+    For spawn with RViz visualization, use: x_omni4wd_description/gazebo_spawn_model_rviz.launch
+  -->
+  
+  <!-- Arguments -->
+  <arg name="world" default="empty" />
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+  <arg name="x" default="0.0" />
+  <arg name="y" default="0.0" />
+  <arg name="z" default="0.1" />
+  <arg name="urdf_file" default="$(find x_omni4wd_description)/urdf/x_omni4wd_description.urdf" />
+  <arg name="rviz_config" default="$(find x_omni4wd_control)/rviz/urdf.rviz" />
+  <arg name="use_rviz" default="true" />
+  <arg name="use_rqt_omni_robot_steering" default="true" />
+  <!-- Khớp x_omni4wd_bringup + navigation (TEB/DWA): clamp ω bánh -->
+  <arg name="L_HALF" default="0.176776695"/>
+  <arg name="W_HALF" default="0.176776695"/>
+  <arg name="wheel_radius" default="0.0635"/>
+  <arg name="max_wheel_speed" default="22.0"/>
+  <arg name="cmd_vel_to_wheels_timeout" default="0.5"/>
+  
+  <!-- Include gazebo_spawn_model_rviz.launch (but disable RViz, we'll add it later with our config) -->
+  <!-- Remap robot_state_publisher to subscribe from /x_omni4wd/joint_states (from ROS Control) -->
+  <include file="$(find x_omni4wd_description)/launch/gazebo_spawn_model_rviz.launch">
+    <arg name="world" value="$(arg world)" />
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="x" value="$(arg x)" />
+    <arg name="y" value="$(arg y)" />
+    <arg name="z" value="$(arg z)" />
+    <arg name="urdf_file" value="$(arg urdf_file)" />
+    <arg name="use_rviz" value="false" />
+    <arg name="joint_states_topic" value="/x_omni4wd/joint_states" />
+  </include>
+
+  <!-- Load ROS Control controllers configuration -->
+  <rosparam file="$(find x_omni4wd_control)/config/controllers.yaml" command="load"/>
+
+  <!-- Start ROS Control controllers -->
+  <!-- Controllers: joint_state_controller + 4 wheel velocity controllers -->
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+        output="screen" ns="/x_omni4wd"
+        args="joint_state_controller
+              front_left_wheel_velocity_controller
+              rear_left_wheel_velocity_controller
+              rear_right_wheel_velocity_controller
+              front_right_wheel_velocity_controller"/>
+
+  <!-- Start kinematics node: cmd_vel -> wheel velocity commands -->
+  <!-- This node converts cmd_vel (Twist) to individual wheel velocity commands -->
+  <node name="cmd_vel_to_omni_wheels" pkg="x_omni4wd_control" type="cmd_vel_to_omni_wheels.py" output="screen">
+    <param name="L_HALF" value="$(arg L_HALF)"/>
+    <param name="W_HALF" value="$(arg W_HALF)"/>
+    <param name="wheel_radius" value="$(arg wheel_radius)"/>
+    <param name="max_wheel_speed" value="$(arg max_wheel_speed)"/>
+    <param name="cmd_timeout" value="$(arg cmd_vel_to_wheels_timeout)"/>
+  </node>
+
+  <!-- Robot state publisher is already started by included gazebo_spawn_model_rviz.launch -->
+  <!-- It is configured to subscribe from /x_omni4wd/joint_states via joint_states_topic argument -->
+
+  <!-- RViz visualization -->
+  <node if="$(arg use_rviz)"
+        name="rviz" 
+        pkg="rviz" 
+        type="rviz"
+        args="-d $(arg rviz_config)"
+        respawn="false"
+        output="screen" />
+
+  <!-- rqt_omni_robot_steering for GUI control (vx, vy, w) for omni-directional robot -->
+  <node if="$(arg use_rqt_omni_robot_steering)"
+        name="rqt_omni_robot_steering" 
+        pkg="rqt_omni_robot_steering" 
+        type="rqt_omni_robot_steering"
+        respawn="false"
+        output="screen" />
+
+</launch>
