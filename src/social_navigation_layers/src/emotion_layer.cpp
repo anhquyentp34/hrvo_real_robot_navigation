@@ -1,4 +1,7 @@
 // Copyright 2026 quyenanh pt
+#include <social_navigation_layers/emotion_layer.h>
+#include <costmap_2d/cost_values.h>
+
 #include <math.h>
 #include <angles/angles.h>
 #include <pluginlib/class_list_macros.h>

@@ -1,4 +1,7 @@
 // Copyright 2026 quyenanh pt
+#include <social_navigation_layers/social_layer.h> // Lop SocialLayer va costmap_2d::Layer
+#include <costmap_2d/cost_values.h> // NO_INFORMATION, LETHAL_OBSTACLE, FREE_SPACE
+
 #include <math.h> // Thư vien toan hoc
 #include <angles/angles.h> // Thư vien goc
 #include <pluginlib/class_list_macros.h> // Thư vien pluginlib

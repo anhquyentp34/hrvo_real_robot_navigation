@@ -1,5 +1,6 @@
 // Copyright 2026 quyenanh pt
 #include <social_navigation_layers/proxemic_layer.h>
+#include <costmap_2d/cost_values.h>
 #include <geometry_msgs/PointStamped.h>
 #include <pluginlib/class_list_macros.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>

@@ -1,4 +1,7 @@
 // Copyright 2026 quyenanh pt
+#include <social_navigation_layers/human_group_layer.h>
+#include <costmap_2d/cost_values.h>
+
 #include <pluginlib/class_list_macros.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <angles/angles.h>
