@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<launch>
+  <!--
+    Gazebo + RViz + diff_drive (/cmd_vel). Có thể chọn teleop:
+      teleop_backend:=twist    → teleop_twist_keyboard (terminal focus)
+      teleop_backend:=keyboard → diff_keyboard_teleop (pynput, khỏi focus terminal)
+
+    Luồng có gate: teleop → /cmd_vel_raw → cmd_vel_gate → /cmd_vel.
+    Tắt gate: teleop → /cmd_vel trực tiếp.
+  -->
+
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+  <arg name="x" default="0.0"/>
+  <arg name="y" default="0.0"/>
+  <arg name="z" default="0.1"/>
+  <arg name="gpu" default="false"/>
+  <arg name="velodyne_visualize" default="true"/>
+  <arg name="use_rviz" default="true"/>
+  <arg name="teleop" default="true"/>
+  <arg name="use_cmd_vel_gate" default="true"/>
+
+  <arg name="teleop_backend" default="twist" doc="twist | keyboard"/>
+  <!-- Tham số cho diff_keyboard_teleop (khi teleop_backend:=keyboard) -->
+  <arg name="teleop_max_vx" default="0.5"/>
+  <arg name="teleop_max_wz" default="1.0"/>
+  <arg name="teleop_accel_linear" default="1.5"/>
+  <arg name="teleop_accel_angular" default="2.5"/>
+  <arg name="teleop_publish_rate" default="50.0"/>
+  <arg name="teleop_use_arrow_keys" default="true"/>
+  <arg name="teleop_invert_angular_z" default="false"/>
+
+  <!-- Đích Twist từ teleop (khớp cmd_vel_gate) -->
+  <arg if="$(arg use_cmd_vel_gate)" name="teleop_cmd_dest" default="/cmd_vel_raw"/>
+  <arg unless="$(arg use_cmd_vel_gate)" name="teleop_cmd_dest" default="/cmd_vel"/>
+
+  <include file="$(find diff_description)/launch/diff_bot_gazebo_rviz.launch">
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="x" value="$(arg x)"/>
+    <arg name="y" value="$(arg y)"/>
+    <arg name="z" value="$(arg z)"/>
+    <arg name="gpu" value="$(arg gpu)"/>
+    <arg name="velodyne_visualize" value="$(arg velodyne_visualize)"/>
+    <arg name="use_rviz" value="$(arg use_rviz)"/>
+  </include>
+
+  <node if="$(arg use_cmd_vel_gate)"
+        pkg="diff_control"
+        type="cmd_vel_gate.py"
+        name="cmd_vel_gate"
+        output="screen">
+    <rosparam file="$(find diff_control)/config/diff_drive_limits.yaml" command="load"/>
+  </node>
+
+  <node if="$(eval arg('teleop') and arg('teleop_backend') == 'twist')"
+        pkg="teleop_twist_keyboard"
+        type="teleop_twist_keyboard.py"
+        name="teleop_diff"
+        output="screen">
+    <remap from="cmd_vel" to="$(arg teleop_cmd_dest)"/>
+  </node>
+
+  <node if="$(eval arg('teleop') and arg('teleop_backend') == 'keyboard')"
+        pkg="diff_keyboard_teleop"
+        type="diff_keyboard_teleop.py"
+        name="diff_keyboard_teleop"
+        output="screen">
+    <param name="cmd_topic" value="$(arg teleop_cmd_dest)"/>
+    <param name="max_vx" value="$(arg teleop_max_vx)"/>
+    <param name="max_wz" value="$(arg teleop_max_wz)"/>
+    <param name="accel_linear" value="$(arg teleop_accel_linear)"/>
+    <param name="accel_angular" value="$(arg teleop_accel_angular)"/>
+    <param name="publish_rate" value="$(arg teleop_publish_rate)"/>
+    <param name="use_arrow_keys" value="$(arg teleop_use_arrow_keys)"/>
+    <param name="invert_angular_z" value="$(arg teleop_invert_angular_z)"/>
+    <param name="vx_forward" value="$(arg teleop_max_vx)"/>
+    <param name="vx_backward" value="$(arg teleop_max_vx)"/>
+    <param name="wz_ccw" value="$(arg teleop_max_wz)"/>
+    <param name="wz_cw" value="$(arg teleop_max_wz)"/>
+  </node>
+</launch>

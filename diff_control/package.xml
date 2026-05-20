@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>diff_control</name>
+  <version>0.1.0</version>
+  <description>Điều khiển vận tốc cho diff_bot (Gazebo diff_drive): teleop_twist hoặc diff_keyboard_teleop, cmd_vel_gate — mô hình theo x_omni4wd_control (ICR2026).</description>
+
+  <maintainer email="anhquyentp34@gmail.com">quyenanh pt</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>rospy</depend>
+  <depend>geometry_msgs</depend>
+  <depend>std_msgs</depend>
+
+  <exec_depend>diff_description</exec_depend>
+  <exec_depend>diff_keyboard_teleop</exec_depend>
+  <exec_depend>teleop_twist_keyboard</exec_depend>
+
+  <export/>
+</package>

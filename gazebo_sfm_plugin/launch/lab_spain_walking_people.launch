@@ -1,0 +1,37 @@
+<launch>
+
+<master auto="start"/>
+<!-- Arguments -->
+<arg name="cmd_vel_topic" default="/cmd_vel"/> 
+<arg name="odom_topic" default="/odom"/> 
+<arg name="global_frame" default="map"/> 
+<arg name="odom_frame" default="odom"/> 
+<arg name="base_frame" default="base_footprint"/>
+<arg name="laser_frame" default="laser"/>     <!-- <!!!!!>  -->
+<arg name="scan_topic" default= "/scan"/> 
+
+<arg name="open_rviz" default="true"/>
+<arg name="move_forward_only" default="True"/>
+<arg name="map_file" default="$(find diff_slam)/maps/minh_map.yaml"/> <!-- t88.yaml minh_map   offic1-->
+
+  <!-- Thêm model path cho Gazebo -->
+  <env name="GAZEBO_MODEL_PATH"
+       value="${GAZEBO_MODEL_PATH}:$(find gazebo_sfm_plugin)/media/models"/>
+  <env name="GAZEBO_RESOURCE_PATH"
+       value="${GAZEBO_RESOURCE_PATH}:$(find gazebo_sfm_plugin)/media/models"/>
+
+  <!-- 1. Khởi world Gazebo t88.world  offic minh_wall.world-->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name"
+         value="$(find gazebo_sfm_plugin)/worlds/minh_wall.world"/>
+  </include>
+
+  <!-- 2. Spawn robot (diff_model.launch chỉ spawn, không gọi lại empty_world) -->
+  <include file="$(find diff_gazebo)/launch/diff_model.launch"/>
+
+
+  <!-- 4. AMCL -->
+  <include file="$(find diff_slam)/launch/localization.launch"/>
+
+</launch>
+

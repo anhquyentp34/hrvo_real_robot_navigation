@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!--
+  Chỉ TF + URDF (không Gazebo): RViz, kiểm tra xacro, hoặc phát bag không có /joint_states đầy đủ.
+-->
+<launch>
+  <arg name="model" default="$(find diff_description)/urdf/diff_bot.urdf.xacro"/>
+  <param name="robot_description" command="$(find xacro)/xacro $(arg model)"/>
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="use_gui" value="false"/>
+    <param name="publish_default_positions" value="true"/>
+  </node>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+    <param name="publish_frequency" value="50.0"/>
+  </node>
+</launch>

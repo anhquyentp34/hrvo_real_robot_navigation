@@ -1,0 +1,7 @@
+# Private params cho node cmd_vel_gate (nạp bằng <rosparam> trong launch).
+max_linear_x: 0.8
+max_linear_y: 0.0
+max_angular_z: 1.2
+cmd_timeout: 0.5
+input_topic: /cmd_vel_raw
+output_topic: /cmd_vel

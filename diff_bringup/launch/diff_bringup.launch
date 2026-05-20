@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!--
+  Bringup tối giản: load URDF + state publishers. Mở RViz tùy chọn.
+  roslaunch diff_bringup diff_bringup.launch open_rviz:=true
+-->
+<launch>
+  <arg name="model" default="$(find diff_description)/urdf/diff_bot.urdf.xacro"/>
+  <arg name="open_rviz" default="false"/>
+  <include file="$(find diff_bringup)/launch/diff_state.launch">
+    <arg name="model" value="$(arg model)"/>
+  </include>
+  <node if="$(arg open_rviz)" pkg="rviz" type="rviz" name="rviz" required="false"/>
+</launch>
