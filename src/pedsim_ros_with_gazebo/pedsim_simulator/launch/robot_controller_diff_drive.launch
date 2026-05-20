@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<launch>
+  <!--
+    Robot ảo diff-drive (không Gazebo): simulate_diff_drive_robot + adapter.
+    Điều khiển: remap move_base cmd_vel -> /pedbot/control/cmd_vel_hrvo
+    hoặc teleop vào cmd_vel_hrvo.
+    KHÔNG chạy đồng thời với Gazebo diff_bot (xung đột TF odom).
+  -->
+  <arg name="pose_initial_x" default="0.0"/>
+  <arg name="pose_initial_y" default="0.0"/>
+  <arg name="pose_initial_theta" default="0.0"/>
+  <arg name="project_hrvo_to_forward" default="true"/>
+
+  <node name="diff_drive_adapter" pkg="hrvo_local_planner" type="diff_drive_twist_adapter" output="screen">
+    <param name="project_to_forward" value="$(arg project_hrvo_to_forward)"/>
+    <param name="use_odom_topic" value="false"/>
+    <param name="input_topic" value="cmd_vel_hrvo"/>
+    <param name="output_topic" value="cmd_vel"/>
+    <param name="pose_topic" value="return_pose_robot"/>
+  </node>
+
+  <node name="driving_controller" pkg="pedsim_simulator" type="simulate_diff_drive_robot" output="screen">
+    <param name="pose_initial_x" value="$(arg pose_initial_x)"/>
+    <param name="pose_initial_y" value="$(arg pose_initial_y)"/>
+    <param name="pose_initial_theta" value="$(arg pose_initial_theta)"/>
+    <param name="publish_return_pose" value="true"/>
+  </node>
+</launch>

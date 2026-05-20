@@ -1,0 +1,73 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <world name="default">
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <model name="airport_centered_walls">
+      <static>1</static>
+      <link name="walls_link">
+        <collision name="wall_1_collision">
+          <pose frame=''>-15 -15 1.4 0 0 0</pose>
+          <geometry><box><size>10 0.2 2.8</size></box></geometry>
+        </collision>
+        <visual name="wall_1_visual">
+          <pose frame=''>-15 -15 1.4 0 0 0</pose>
+          <geometry><box><size>10 0.2 2.8</size></box></geometry>
+        </visual>
+
+        <collision name="wall_2_collision">
+          <pose frame=''>-30 0 1.4 0 0 1.57</pose>
+          <geometry><box><size>30 0.2 2.8</size></box></geometry>
+        </collision>
+        <visual name="wall_2_visual">
+          <pose frame=''>-30 0 1.4 0 0 1.57</pose>
+          <geometry><box><size>30 0.2 2.8</size></box></geometry>
+        </visual>
+
+        <collision name="wall_3_collision">
+          <pose frame=''>5 15 1.4 0 0 0</pose>
+          <geometry><box><size>40 0.2 2.8</size></box></geometry>
+        </collision>
+        <visual name="wall_3_visual">
+          <pose frame=''>5 15 1.4 0 0 0</pose>
+          <geometry><box><size>40 0.2 2.8</size></box></geometry>
+        </visual>
+
+        <collision name="wall_4_collision">
+          <pose frame=''>30 0 1.4 0 0 1.57</pose>
+          <geometry><box><size>20 0.2 2.8</size></box></geometry>
+        </collision>
+        <visual name="wall_4_visual">
+          <pose frame=''>30 0 1.4 0 0 1.57</pose>
+          <geometry><box><size>20 0.2 2.8</size></box></geometry>
+        </visual>
+
+        <collision name="wall_5_collision">
+          <pose frame=''>17.5 -15 1.4 0 0 0</pose>
+          <geometry><box><size>15 0.2 2.8</size></box></geometry>
+        </collision>
+        <visual name="wall_5_visual">
+          <pose frame=''>17.5 -15 1.4 0 0 0</pose>
+          <geometry><box><size>15 0.2 2.8</size></box></geometry>
+        </visual>
+
+        <collision name="wall_6_collision">
+          <pose frame=''>-27.5 15 1.4 0 0 0</pose>
+          <geometry><box><size>5 0.2 2.8</size></box></geometry>
+        </collision>
+        <visual name="wall_6_visual">
+          <pose frame=''>-27.5 15 1.4 0 0 0</pose>
+          <geometry><box><size>5 0.2 2.8</size></box></geometry>
+        </visual>
+      </link>
+    </model>
+
+    
+    <plugin name="ActorPosesPlugin" filename="libActorPosesPlugin.so"/>
+  </world>
+</sdf>

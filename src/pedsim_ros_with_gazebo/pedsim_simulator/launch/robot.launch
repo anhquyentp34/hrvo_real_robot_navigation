@@ -1,0 +1,97 @@
+<launch>
+  <param name="use_sim_time" value="true"/>
+  <arg name="kbd_teleop" default="false"/>
+  <arg name="rqt_teleop" default="false"/>
+  <arg name="scene_file" default="$(find pedsim_simulator)/scenarios/eng_hall.xml"/>
+  <arg name="world_name" default="$(find pedsim_gazebo_plugin)/worlds/eng_hall.world"/>
+  <arg name="default_queue_size" default="10"/>
+  <arg name="max_robot_speed" default="1.5"/>
+  <arg name="robot_mode" default="1"/>
+  <arg name="enable_groups" default="true"/>
+  <arg name="with_robot" default="true"/>
+  <!-- Phải trùng tên model khi spawn URDF trong Gazebo (kobuki/diff_bot mặc định: mobile_base) -->
+  <arg name="gazebo_robot_model_name" default="mobile_base"/>
+  <arg name="diff_bot_urdf" default="$(find diff_description)/urdf/diff_bot.urdf.xacro"/>
+  <arg name="diff_bot_gpu" default="false"/>
+  <!-- lobby: (1,1); square: (1,1); cumberland: (4,8); autolab: (1,8); freiburg: (3,17) -->
+  <arg name="pose_initial_x" default="1.0"/> 
+  <arg name="pose_initial_y" default="1.0"/>
+  <arg name="pose_initial_theta" default="0.0"/>
+  <arg name="simulation_factor" default="1"/>
+  <arg name="update_rate" default="25.0"/>
+
+  <arg name="visualize" default="false"/>
+  <!-- RViz animated pedestrians (mesh OGRE), giống luồng ICR2026 + animated_markers -->
+  <arg name="enable_actor_animated_markers" default="false"/>
+  <arg name="gui" default="true" doc="Bring up the Gazebo graphical interface"/>
+
+  <!-- Gazebo -->
+  <!--include file="$(find pedsim_gazebo_plugin)/launch/eng_hall.launch"/-->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+      <arg name="world_name" value="$(arg world_name)"/>
+      <arg name="gui" value="$(arg gui)" />
+  </include>
+  
+  <!-- this node spawn pedsim actors to gazebo once, then the plugin updates their pose -->  
+  <node pkg="pedsim_gazebo_plugin" type="spawn_pedsim_agents.py" name="spawn_pedsim_agents"  output="screen">
+  </node>
+
+  <!-- Place gazebo frame at map frame -->
+  <node pkg="tf" type="static_transform_publisher" name="gazebo_map_broadcaster"
+      args="-1 -1 0 0 0 0  odom gazebo 100"/>
+  <!--node pkg="nav_cnn" name="gazebo_odom_broadcaster" type="gazebo_odom_broadcaster.py" output="screen" /-->
+
+  <!-- Robot diff/Kobuki (robot_gazebo): Turtle-style stack mặc định – tắt bằng with_robot:=false -->
+  <!-- default= để launch khác (vd. diff_simulation) có thể truyền base:=diff_bot; vẫn đọc ROBOT_BASE nếu không truyền -->
+  <arg name="base"         default="$(optenv ROBOT_BASE kobuki)"/> <!-- create, roomba, diff_bot -->
+  <arg name="battery"      value="$(optenv ROBOT_BATTERY /proc/acpi/battery/BAT0)"/>  <!-- /proc/acpi/battery/BAT0 -->
+  <arg name="stacks"       value="$(optenv ROBOT_STACKS hexagons)"/>  <!-- circles, hexagons -->
+  <arg name="laser_sensor" value="$(optenv ROBOT_LASER_SENSOR hokuyo_kinect)"/>  <!-- laser, hokuyo lidar -->
+  <arg name="3d_sensor"    value="$(optenv TURTLEBOT_3D_SENSOR kinect)"/>  <!-- kinect, asus_xtion_pro -->
+
+  <group if="$(arg with_robot)">
+    <include if="$(eval arg('base') == 'diff_bot')"
+             file="$(find robot_gazebo)/launch/includes/diff_bot.launch.xml">
+        <arg name="base" value="$(arg base)"/>
+        <arg name="stacks" value="$(arg stacks)"/>
+        <arg name="3d_sensor" value="$(arg 3d_sensor)"/>
+        <arg name="laser_sensor" value="$(arg laser_sensor)"/>
+        <arg name="initial_pose" value="-x $(arg pose_initial_x) -y $(arg pose_initial_y) -Y $(arg pose_initial_theta)"/>
+        <arg name="gazebo_model_name" value="$(arg gazebo_robot_model_name)"/>
+        <arg name="urdf_model" value="$(arg diff_bot_urdf)"/>
+        <arg name="gpu" value="$(arg diff_bot_gpu)"/>
+    </include>
+    <include unless="$(eval arg('base') == 'diff_bot')"
+             file="$(find robot_gazebo)/launch/includes/$(arg base).launch.xml">
+        <arg name="base" value="$(arg base)"/>
+        <arg name="stacks" value="$(arg stacks)"/>
+        <arg name="3d_sensor" value="$(arg 3d_sensor)"/>
+        <arg name="laser_sensor" value="$(arg laser_sensor)"/>
+        <arg name="initial_pose" value="-x $(arg pose_initial_x) -y $(arg pose_initial_y) -Y $(arg pose_initial_theta)"/>
+    </include>
+  </group>
+
+  <node if="$(arg with_robot)" pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+      <param name="publish_frequency" type="double" value="30.0" />
+  </node>
+
+  <!-- main simulator node -->
+  <node name="pedsim_simulator" pkg="pedsim_simulator" type="pedsim_simulator" output="screen">
+    <param name="scene_file" value="$(arg scene_file)" type="string"/>
+    <param name="default_queue_size" value="$(arg default_queue_size)" type="int"/>
+    <param name="max_robot_speed" value="$(arg max_robot_speed)" type="double"/>
+    <param name="robot_mode" value="$(arg robot_mode)" type="int"/>
+    <param name="enable_groups" value="$(arg enable_groups)" type="bool"/>
+    <param name="simulation_factor" value="$(arg simulation_factor)" type="double"/>
+    <param name="update_rate" value="$(arg update_rate)" type="double"/>
+    <param name="frame_id"  value="gazebo" />
+    <param name="gazebo_robot_model_name" value="$(arg gazebo_robot_model_name)" type="string"/>
+  </node>
+
+  <!-- Visualizer -->
+  <include file="$(find pedsim_visualizer)/launch/visualizer.launch"/>
+
+  <include if="$(arg enable_actor_animated_markers)"
+           file="$(find pedsim_gazebo_plugin)/launch/actor_animated_markers.launch"/>
+
+</launch>

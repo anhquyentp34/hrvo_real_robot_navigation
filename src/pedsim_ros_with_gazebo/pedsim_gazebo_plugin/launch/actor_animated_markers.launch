@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<launch>
+  <!--
+    RViz: Mesh người đi bộ (animated_marker_msgs) khớp actor Pedsim trong Gazebo.
+    Trong RViz thêm display: AnimatedMarkerArray (animated_marker_rviz_plugin), topic mặc định /actor_visualization.
+    Cần: animated_marker_msgs, animated_marker_rviz_plugin, animated_marker_tutorial (mesh), đã source workspace.
+  -->
+  <arg name="frame_id" default="world"/>
+  <arg name="output_topic" default="/actor_visualization"/>
+  <arg name="input_source" default="pedsim" doc="pedsim | gazebo"/>
+  <arg name="pedsim_topic" default="/pedsim_simulator/simulated_agents"/>
+  <arg name="model_states_topic" default="/gazebo/model_states"/>
+  <arg name="publish_rate" default="15.0"/>
+  <arg name="actor_name_regex" default="^[0-9]+$" doc="Pedsim spawn tên model = id số"/>
+  <arg name="static_actor_name_regex" default="^$" doc="Không gán riêng actor đứng; để trống = mọi ID dùng mesh đi bộ"/>
+  <arg name="human_mesh_resource" default="package://animated_marker_tutorial/meshes/animated_walking_man.mesh"/>
+
+  <node name="pedsim_actor_visualization" pkg="pedsim_gazebo_plugin" type="pedsim_actor_visualization_node.py" output="screen">
+    <param name="frame_id" value="$(arg frame_id)"/>
+    <param name="output_topic" value="$(arg output_topic)"/>
+    <param name="input_source" value="$(arg input_source)"/>
+    <param name="pedsim_topic" value="$(arg pedsim_topic)"/>
+    <param name="model_states_topic" value="$(arg model_states_topic)"/>
+    <param name="publish_rate" value="$(arg publish_rate)"/>
+    <param name="actor_name_regex" value="$(arg actor_name_regex)"/>
+    <param name="static_actor_name_regex" value="$(arg static_actor_name_regex)"/>
+    <param name="human_mesh_resource" value="$(arg human_mesh_resource)"/>
+  </node>
+</launch>

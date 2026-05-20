@@ -1,0 +1,145 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <world name="default">
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- Cấu trúc tường theo style service.world: 1 model, 1 link, nhiều collision -->
+    <model name="walls">
+      <static>1</static>
+      <link name="link">
+        <gravity>0</gravity>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+
+        <collision name="collision_1">
+          <pose frame=''>0.0 -7.5 1.4 0 0 0.0</pose>
+          <geometry>
+            <box>
+              <size>20.0 0.2 2.8</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact><ode/></contact>
+            <bounce/>
+            <friction><torsional><ode/></torsional><ode/></friction>
+          </surface>
+        </collision>
+        <visual name="visual_1">
+          <pose frame=''>0.0 -7.5 1.4 0 0 0.0</pose>
+          <cast_shadows>0</cast_shadows>
+          <geometry>
+            <box>
+              <size>20.0 0.2 2.8</size>
+            </box>
+          </geometry>
+        </visual>
+
+        <collision name="collision_2">
+          <pose frame=''>-10.0 0.0 1.4 0 0 1.57</pose>
+          <geometry>
+            <box>
+              <size>15.0 0.2 2.8</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact><ode/></contact>
+            <bounce/>
+            <friction><torsional><ode/></torsional><ode/></friction>
+          </surface>
+        </collision>
+        <visual name="visual_2">
+          <pose frame=''>-10.0 0.0 1.4 0 0 1.57</pose>
+          <cast_shadows>0</cast_shadows>
+          <geometry>
+            <box>
+              <size>15.0 0.2 2.8</size>
+            </box>
+          </geometry>
+        </visual>
+
+        <collision name="collision_3">
+          <pose frame=''>0.0 7.5 1.4 0 0 0.0</pose>
+          <geometry>
+            <box>
+              <size>20.0 0.2 2.8</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact><ode/></contact>
+            <bounce/>
+            <friction><torsional><ode/></torsional><ode/></friction>
+          </surface>
+        </collision>
+        <visual name="visual_3">
+          <pose frame=''>0.0 7.5 1.4 0 0 0.0</pose>
+          <cast_shadows>0</cast_shadows>
+          <geometry>
+            <box>
+              <size>20.0 0.2 2.8</size>
+            </box>
+          </geometry>
+        </visual>
+
+        <collision name="collision_4">
+          <pose frame=''>10.0 0.0 1.4 0 0 1.57</pose>
+          <geometry>
+            <box>
+              <size>15.0 0.2 2.8</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact><ode/></contact>
+            <bounce/>
+            <friction><torsional><ode/></torsional><ode/></friction>
+          </surface>
+        </collision>
+        <visual name="visual_4">
+          <pose frame=''>10.0 0.0 1.4 0 0 1.57</pose>
+          <cast_shadows>0</cast_shadows>
+          <geometry>
+            <box>
+              <size>15.0 0.2 2.8</size>
+            </box>
+          </geometry>
+        </visual>
+
+        <collision name="collision_5">
+          <pose frame=''>-2.0 -5.0 1.4 0 0 1.57</pose>
+          <geometry>
+            <box>
+              <size>5.0 0.2 2.8</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact><ode/></contact>
+            <bounce/>
+            <friction><torsional><ode/></torsional><ode/></friction>
+          </surface>
+        </collision>
+        <visual name="visual_5">
+          <pose frame=''>-2.0 -5.0 1.4 0 0 1.57</pose>
+          <cast_shadows>0</cast_shadows>
+          <geometry>
+            <box>
+              <size>5.0 0.2 2.8</size>
+            </box>
+          </geometry>
+        </visual>
+      </link>
+    </model>
+
+    <plugin filename="libcollision_map_creator.so" name="collision_map_creator"/>
+    <plugin name="ActorPosesPlugin" filename="libActorPosesPlugin.so"/>
+  </world>
+</sdf>
